@@ -1,0 +1,29 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "dev.creategmf.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "client.AbstractInstanceMixin",
+    "client.AbstractBlockEntityVisualMixin",
+    "client.BlazeBurnerBlockEntityMixin",
+    "client.BlazeBurnerVisualMixin",
+    "client.BeltRendererMixin",
+    "client.BeltVisualMixin",
+    "client.ParticleEngineMixin",
+    "client.ChainConveyorVisualMixin",
+    "client.ChainConveyorRendererMixin",
+    "client.CreateBlockEntityDynamicVisualMixin",
+    "client.HarvesterActorVisualMixin",
+    "client.HarvesterRendererMixin",
+    "client.KineticBlockEntityRendererMixin",
+    "client.RotatingInstanceMixin",
+    "client.SimpleTickableVisualMixin",
+    "client.FlapDisplaySectionMixin",
+    "client.SpriteContentsMixin",
+    "client.SpriteContentsTickerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}
