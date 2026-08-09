@@ -2,6 +2,12 @@
 
 [Русская версия](README_RU.md) | English
 
+<p align="center">
+  <img src="src/main/resources/icon.png" alt="Create: Give Me FPS icon" width="256">
+</p>
+
+**Current release: 0.1.0**
+
 Client-side performance controls and in-world diagnostics for **Minecraft Java
 Edition 1.21.1**, **NeoForge**, **Create 6.0.10**, and **Flywheel 1.0.6**.
 
@@ -29,6 +35,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
+| Create: Give Me FPS | 0.1.0 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -54,6 +61,9 @@ On Linux or macOS:
 
 The resulting JAR is written to `build/libs/`.
 
+The downloadable release is named
+`Create-Give-Me-FPS-0.1.0-NeoForge-1.21.1.jar`.
+
 ## Important limitations
 
 The animation controls reduce or stop supported animation updates. They do not
@@ -65,4 +75,3 @@ resolution, render distance, and shader configuration.
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
