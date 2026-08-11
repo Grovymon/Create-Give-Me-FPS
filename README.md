@@ -3,7 +3,7 @@
 [Русская версия](README_RU.md) | English
 
 <p align="center">
-  <img src="src/main/resources/icon.png" alt="Create: Give Me FPS icon" width="256">
+  <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
 
 **Current release: 0.1.1**

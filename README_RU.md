@@ -3,7 +3,7 @@
 Русский | [English version](README.md)
 
 <p align="center">
-  <img src="src/main/resources/icon.png" alt="Значок Create: Give Me FPS" width="256">
+  <img src="docs/icon.png" alt="Значок Create: Give Me FPS" width="360">
 </p>
 
 **Текущая версия: 0.1.1**
