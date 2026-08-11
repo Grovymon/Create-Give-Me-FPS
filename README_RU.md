@@ -6,7 +6,9 @@
   <img src="src/main/resources/icon.png" alt="Значок Create: Give Me FPS" width="256">
 </p>
 
-**Текущая версия: 0.1.0**
+**Текущая версия: 0.1.1**
+
+> **Новое в 0.1.1:** обновлён значок мода.
 
 Клиентский мод оптимизации и внутриигровой диагностики для **Minecraft Java
 Edition 1.21.1**, **NeoForge**, **Create 6.0.10** и **Flywheel 1.0.6**.
@@ -36,7 +38,7 @@ Create, не останавливая работу механизмов, инв�
 
 | Компонент | Версия |
 | --- | --- |
-| Create: Give Me FPS | 0.1.0 |
+| Create: Give Me FPS | 0.1.1 |
 | Minecraft | 1.21.1 |
 | Загрузчик | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -63,7 +65,7 @@ Create, не останавливая работу механизмов, инв�
 Готовый JAR появится в каталоге `build/libs/`.
 
 Файл готового релиза называется
-`Create-Give-Me-FPS-0.1.0-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.1-NeoForge-1.21.1.jar`.
 
 ## Важные ограничения
 
@@ -76,4 +78,4 @@ Create, не останавливая работу механизмов, инв�
 
 ## Лицензия
 
-MIT. См. [LICENSE](LICENSE).
+Mozilla Public License 2.0 (MPL-2.0). См. [LICENSE](LICENSE).

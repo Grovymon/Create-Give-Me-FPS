@@ -6,7 +6,9 @@
   <img src="src/main/resources/icon.png" alt="Create: Give Me FPS icon" width="256">
 </p>
 
-**Current release: 0.1.0**
+**Current release: 0.1.1**
+
+> **New in 0.1.1:** refreshed the mod icon.
 
 Client-side performance controls and in-world diagnostics for **Minecraft Java
 Edition 1.21.1**, **NeoForge**, **Create 6.0.10**, and **Flywheel 1.0.6**.
@@ -35,7 +37,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
-| Create: Give Me FPS | 0.1.0 |
+| Create: Give Me FPS | 0.1.1 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -62,7 +64,7 @@ On Linux or macOS:
 The resulting JAR is written to `build/libs/`.
 
 The downloadable release is named
-`Create-Give-Me-FPS-0.1.0-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.1-NeoForge-1.21.1.jar`.
 
 ## Important limitations
 
@@ -74,4 +76,4 @@ resolution, render distance, and shader configuration.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Mozilla Public License 2.0 (MPL-2.0). See [LICENSE](LICENSE).
