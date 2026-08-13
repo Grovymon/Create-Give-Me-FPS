@@ -84,6 +84,9 @@ public final class GmfDiagnosticsScreen extends GmfScreen {
             graphics.drawString(font, Component.translatable("gui.create_gmf.evidence_and_confidence",
                     Component.translatable(result.evidence().translationKey()),
                     Component.translatable(result.confidence().translationKey())), x, 192, 0xFFB8C1CC);
+            // The detailed list belongs on the profiler screen.  Keeping it off this
+            // compact result screen avoids drawing a fifth line over the settings button
+            // at larger GUI scales.
         }
         super.render(graphics, mouseX, mouseY, partialTick);
     }

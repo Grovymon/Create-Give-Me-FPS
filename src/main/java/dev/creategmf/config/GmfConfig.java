@@ -5,7 +5,7 @@ import java.util.EnumMap;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class GmfConfig {
-    public static final int CURRENT_VERSION = 6;
+    public static final int CURRENT_VERSION = 9;
     public static final ClientValues CLIENT;
     public static final ModConfigSpec SPEC;
 
@@ -19,6 +19,7 @@ public final class GmfConfig {
     }
 
     public static void save() {
+        CLIENT.configVersion.set(CURRENT_VERSION);
         SPEC.save();
     }
 
@@ -26,6 +27,8 @@ public final class GmfConfig {
         CLIENT.enabled.set(true);
         CLIENT.showOverlay.set(false);
         CLIENT.profilerMode.set(ProfilerMode.LIGHT);
+        CLIENT.flywheelBackend.set(FlywheelBackendMode.DEFAULT);
+        CLIENT.acceleratedRenderer.set(true);
         CLIENT.diagnosticDurationSeconds.set(10);
         applyProfile(PcProfile.MEDIUM);
         save();
@@ -40,6 +43,10 @@ public final class GmfConfig {
         CLIENT.enabled.set(true);
         CLIENT.pcProfile.set(profile);
         CLIENT.beltItemShadowOptimization.set(true);
+        CLIENT.renderTransportedBeltItems.set(profile != PcProfile.POTATO);
+        CLIENT.filterCreateParticles.set(true);
+        CLIENT.filterFluidParticles.set(true);
+        CLIENT.crushingOutputRendering.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
         CLIENT.mechanismAnimations.values().forEach(value -> value.set(profile != PcProfile.POTATO));
 
         switch (profile) {
@@ -71,11 +78,17 @@ public final class GmfConfig {
         public final ModConfigSpec.BooleanValue showOverlay;
         public final ModConfigSpec.EnumValue<ProfilerMode> profilerMode;
         public final ModConfigSpec.BooleanValue beltItemShadowOptimization;
+        public final ModConfigSpec.BooleanValue renderTransportedBeltItems;
         public final ModConfigSpec.DoubleValue beltItemShadowDistance;
         public final ModConfigSpec.EnumValue<CreateParticleMode> createParticleMode;
+        public final ModConfigSpec.BooleanValue filterCreateParticles;
+        public final ModConfigSpec.BooleanValue filterFluidParticles;
         public final ModConfigSpec.EnumValue<DistantAnimationMode> distantAnimationMode;
         public final ModConfigSpec.DoubleValue distantAnimationDistance;
         public final ModConfigSpec.IntValue reducedAnimationFps;
+        public final ModConfigSpec.EnumValue<FlywheelBackendMode> flywheelBackend;
+        public final ModConfigSpec.BooleanValue acceleratedRenderer;
+        public final ModConfigSpec.BooleanValue crushingOutputRendering;
         public final EnumMap<MechanismAnimationGroup, ModConfigSpec.BooleanValue> mechanismAnimations;
         public final ModConfigSpec.IntValue diagnosticDurationSeconds;
 
@@ -99,13 +112,28 @@ public final class GmfConfig {
             builder.push("belts");
             beltItemShadowOptimization = builder.define("transportedItemShadowOptimization", true);
             beltItemShadowDistance = builder.defineInRange("transportedItemShadowDistance", 24.0, 0.0, 128.0);
+            renderTransportedBeltItems = builder.define("renderTransportedItems", true);
             builder.pop();
 
             builder.push("createRendering");
             createParticleMode = builder.defineEnum("particleMode", CreateParticleMode.REDUCED);
+            filterCreateParticles = builder.define("filterCreateParticles", true);
+            filterFluidParticles = builder.define("filterFluidParticles", true);
             distantAnimationMode = builder.defineEnum("distantAnimationMode", DistantAnimationMode.REDUCED);
             distantAnimationDistance = builder.defineInRange("distantAnimationDistance", 48.0, 0.0, 256.0);
             reducedAnimationFps = builder.defineInRange("reducedAnimationFps", 10, 1, 30);
+            builder.pop();
+
+            builder.push("flywheel");
+            flywheelBackend = builder.defineEnum("backend", FlywheelBackendMode.DEFAULT);
+            acceleratedRenderer = builder.comment(
+                    "Use the CreateBetterFPS-derived SuperByteBuffer renderer when Sodium and Iris are installed. "
+                            + "Restart the game after changing this option.")
+                    .define("acceleratedRenderer", true);
+            builder.pop();
+
+            builder.push("crushingWheels");
+            crushingOutputRendering = builder.define("renderLooseItemsNearCrushingWheels", true);
             builder.pop();
 
             builder.push("mechanismAnimations");

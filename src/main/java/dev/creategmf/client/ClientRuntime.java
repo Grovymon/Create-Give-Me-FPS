@@ -4,7 +4,7 @@ import dev.creategmf.benchmark.OptimizationBenchmarkSession;
 import dev.creategmf.benchmark.PcBenchmarkSession;
 import dev.creategmf.diagnostics.DiagnosticSession;
 import dev.creategmf.gui.GmfDiagnosticsScreen;
-import dev.creategmf.gui.GmfMainScreen;
+import dev.creategmf.gui.GmfSettingsScreen;
 import dev.creategmf.gui.GmfOptimizationBenchmarkScreen;
 import dev.creategmf.optimization.animations.DistantAnimationController;
 import dev.creategmf.profiler.FrameTimeCollector;
@@ -38,7 +38,7 @@ public final class ClientRuntime {
                 OptimizationBenchmarkSession.INSTANCE.cancel();
                 minecraft.setScreen(new GmfOptimizationBenchmarkScreen(null));
             } else {
-                minecraft.setScreen(new GmfMainScreen(minecraft.screen));
+                minecraft.setScreen(new GmfSettingsScreen(minecraft.screen));
             }
         }
 

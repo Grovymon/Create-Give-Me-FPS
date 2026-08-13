@@ -102,6 +102,10 @@ public final class DistantAnimationController {
                 MechanismAnimationGroup.fromClassName(ownerClassName), camera);
     }
 
+    public static AnimationPolicy animationPolicy(BlockPos pos, MechanismAnimationGroup group, Camera camera) {
+        return animationPolicy(pos == null ? null : Vec3.atCenterOf(pos), group, camera);
+    }
+
     public static AnimationPolicy animationPolicy(Vec3 position, MechanismAnimationGroup group, Camera camera) {
         if (!GmfConfig.CLIENT.enabled.get()) {
             return AnimationPolicy.FULL;

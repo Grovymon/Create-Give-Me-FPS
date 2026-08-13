@@ -26,6 +26,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         "com.simibubi.create.content.kinetics.mixer.MixerVisual",
         "com.simibubi.create.content.kinetics.press.PressVisual",
         "com.simibubi.create.content.kinetics.steamEngine.SteamEngineVisual"
+        , "com.simibubi.create.content.logistics.tunnel.BeltTunnelVisual"
+        , "com.simibubi.create.content.logistics.funnel.FunnelVisual"
+        , "com.simibubi.create.content.logistics.depot.EjectorVisual"
+        , "com.simibubi.create.content.logistics.packagePort.frogport.FrogportVisual"
+        , "com.simibubi.create.content.logistics.packager.PackagerVisual"
+        , "com.simibubi.create.content.contraptions.pulley.HosePulleyVisual"
+        , "com.simibubi.create.content.processing.burner.BlazeBurnerVisual"
+        , "com.simibubi.create.content.trains.signal.SignalVisual"
 }, remap = false)
 public abstract class CreateBlockEntityDynamicVisualMixin extends AbstractBlockEntityVisual<BlockEntity> {
     @Unique

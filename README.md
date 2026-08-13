@@ -6,9 +6,10 @@
   <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
 
-**Current release: 0.1.1**
+**Current release: 0.1.4**
 
-> **New in 0.1.1:** refreshed the mod icon.
+> **New in 0.1.4:** optional accelerated Create rendering, adapted from
+> CreateBetterFPS by MoePus under the MIT License.
 
 Client-side performance controls and in-world diagnostics for **Minecraft Java
 Edition 1.21.1**, **NeoForge**, **Create 6.0.10**, and **Flywheel 1.0.6**.
@@ -29,6 +30,8 @@ simulation.
 - in-world lag diagnostics and before/after measurements;
 - shader detection through the Iris public API;
 - complete English and Russian interface localization.
+- optional **Accelerated Rendering** switch in the Flywheel page. It uses the
+  CreateBetterFPS-derived path only when both Sodium and Iris are present.
 
 Press **G** in a world to open the compact menu. Diagnostics run over the live
 world and ask the player to keep the same position and camera direction.
@@ -37,7 +40,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
-| Create: Give Me FPS | 0.1.1 |
+| Create: Give Me FPS | 0.1.4 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -64,7 +67,7 @@ On Linux or macOS:
 The resulting JAR is written to `build/libs/`.
 
 The downloadable release is named
-`Create-Give-Me-FPS-0.1.1-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.4-NeoForge-1.21.1.jar`.
 
 ## Important limitations
 
@@ -74,6 +77,13 @@ textures. A successful build also does not guarantee an FPS gain in every
 factory or shader pack; compare performance from the same position, camera,
 resolution, render distance, and shader configuration.
 
+## CreateBetterFPS attribution
+
+The optional accelerated renderer is adapted from
+[CreateBetterFPS](https://github.com/MoePus/CreateBetterFPS) by MoePus.
+It is used under the MIT License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+and the preserved [original MIT notice](THIRD_PARTY_LICENSES/CreateBetterFPS-MIT.txt).
+
 ## License
 
-Mozilla Public License 2.0 (MPL-2.0). See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
