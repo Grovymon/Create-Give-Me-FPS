@@ -6,11 +6,12 @@
   <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
 
-**Current release: 0.1.6**
+**Current release: 0.1.7**
 
-> **New in 0.1.6:** fixed the 0.1.5 startup crash. The mod now waits for
-> NeoForge to load its configuration before reading renderer or animation
-> settings.
+> **New in 0.1.7:** added independent controls for steam/smoke, sparks,
+> item/block-break particles, and water/lava splashes; added a visual-update
+> divider for Create animations and a compatibility warning for overlapping
+> CreateBetterFPS or Flerovium installations.
 
 Client-side performance controls and in-world diagnostics for **Minecraft Java
 Edition 1.21.1**, **NeoForge**, **Create 6.0.10**, and **Flywheel 1.0.6**.
@@ -27,6 +28,8 @@ simulation.
 - full-animation-distance slider from 0 to 256 blocks (`0` means disabled);
 - reduced animation frame-rate control;
 - Create particle reduction or suppression;
+- independent steam/smoke, spark, break-effect and splash particle controls;
+- client-side visual animation updates every 1–5 ticks, without changing machine logic;
 - belt item-shadow distance controls;
 - in-world lag diagnostics and before/after measurements;
 - shader detection through the Iris public API;
@@ -42,7 +45,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
-| Create: Give Me FPS | 0.1.6 |
+| Create: Give Me FPS | 0.1.7 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -69,7 +72,7 @@ On Linux or macOS:
 The resulting JAR is written to `build/libs/`.
 
 The downloadable release is named
-`Create-Give-Me-FPS-0.1.6-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.7-NeoForge-1.21.1.jar`.
 
 ## Important limitations
 

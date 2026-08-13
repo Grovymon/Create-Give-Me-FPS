@@ -5,7 +5,7 @@ import java.util.EnumMap;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class GmfConfig {
-    public static final int CURRENT_VERSION = 9;
+    public static final int CURRENT_VERSION = 10;
     public static final ClientValues CLIENT;
     public static final ModConfigSpec SPEC;
 
@@ -46,6 +46,10 @@ public final class GmfConfig {
         CLIENT.renderTransportedBeltItems.set(profile != PcProfile.POTATO);
         CLIENT.filterCreateParticles.set(true);
         CLIENT.filterFluidParticles.set(true);
+        CLIENT.renderSteamSmokeParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
+        CLIENT.renderSparkParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
+        CLIENT.renderItemBreakParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
+        CLIENT.renderWaterSplashParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
         CLIENT.crushingOutputRendering.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
         CLIENT.mechanismAnimations.values().forEach(value -> value.set(profile != PcProfile.POTATO));
 
@@ -65,6 +69,11 @@ public final class GmfConfig {
         CLIENT.targetFps.set(targetFps);
         CLIENT.distantAnimationDistance.set(animationDistance);
         CLIENT.reducedAnimationFps.set(animationFps);
+        CLIENT.animationUpdateTickDivisor.set(switch (animationMode) {
+            case STATIC -> 5;
+            case REDUCED -> animationFps <= 10 ? 3 : 2;
+            case FULL -> 1;
+        });
         CLIENT.beltItemShadowDistance.set(shadowDistance);
         CLIENT.createParticleMode.set(particles);
         CLIENT.distantAnimationMode.set(animationMode);
@@ -83,9 +92,14 @@ public final class GmfConfig {
         public final ModConfigSpec.EnumValue<CreateParticleMode> createParticleMode;
         public final ModConfigSpec.BooleanValue filterCreateParticles;
         public final ModConfigSpec.BooleanValue filterFluidParticles;
+        public final ModConfigSpec.BooleanValue renderSteamSmokeParticles;
+        public final ModConfigSpec.BooleanValue renderSparkParticles;
+        public final ModConfigSpec.BooleanValue renderItemBreakParticles;
+        public final ModConfigSpec.BooleanValue renderWaterSplashParticles;
         public final ModConfigSpec.EnumValue<DistantAnimationMode> distantAnimationMode;
         public final ModConfigSpec.DoubleValue distantAnimationDistance;
         public final ModConfigSpec.IntValue reducedAnimationFps;
+        public final ModConfigSpec.IntValue animationUpdateTickDivisor;
         public final ModConfigSpec.EnumValue<FlywheelBackendMode> flywheelBackend;
         public final ModConfigSpec.BooleanValue acceleratedRenderer;
         public final ModConfigSpec.BooleanValue crushingOutputRendering;
@@ -119,9 +133,16 @@ public final class GmfConfig {
             createParticleMode = builder.defineEnum("particleMode", CreateParticleMode.REDUCED);
             filterCreateParticles = builder.define("filterCreateParticles", true);
             filterFluidParticles = builder.define("filterFluidParticles", true);
+            renderSteamSmokeParticles = builder.define("renderSteamAndSmokeParticles", true);
+            renderSparkParticles = builder.define("renderSparkParticles", true);
+            renderItemBreakParticles = builder.define("renderItemAndBlockBreakParticles", true);
+            renderWaterSplashParticles = builder.define("renderWaterAndLavaSplashParticles", true);
             distantAnimationMode = builder.defineEnum("distantAnimationMode", DistantAnimationMode.REDUCED);
             distantAnimationDistance = builder.defineInRange("distantAnimationDistance", 48.0, 0.0, 256.0);
             reducedAnimationFps = builder.defineInRange("reducedAnimationFps", 10, 1, 30);
+            animationUpdateTickDivisor = builder.comment(
+                    "Updates client-side Create visuals every Nth tick. Does not affect machine simulation.")
+                    .defineInRange("animationUpdateTickDivisor", 1, 1, 5);
             builder.pop();
 
             builder.push("flywheel");

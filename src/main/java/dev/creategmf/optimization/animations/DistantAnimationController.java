@@ -73,6 +73,12 @@ public final class DistantAnimationController {
         if (limit <= 0) {
             return false;
         }
+        // This is a client visual update divider only.  Create's kinetic
+        // network, stress calculation and machine processing stay untouched.
+        if (Math.floorMod(tickIndex + access.createGmf$getWorldPosition().asLong(),
+                GmfConfig.CLIENT.animationUpdateTickDivisor.get()) != 0) {
+            return false;
+        }
         DistantAnimationMode mode = GmfConfig.CLIENT.distantAnimationMode.get();
         if (mode == DistantAnimationMode.FULL) {
             return true;

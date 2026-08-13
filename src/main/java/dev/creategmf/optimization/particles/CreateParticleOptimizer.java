@@ -34,9 +34,8 @@ public final class CreateParticleOptimizer {
         boolean createParticle = "create".equals(id.getNamespace());
         boolean fluidEffect = "minecraft".equals(id.getNamespace())
                 && HEAVY_VANILLA_FLUID_PARTICLES.contains(id.getPath());
-        if (!createParticle && !fluidEffect) {
-            return true;
-        }
+        if (!isAllowedCategory(id)) return false;
+        if (!createParticle && !fluidEffect) return true;
         // "Off" is absolute: per-category switches must not accidentally let
         // fluid particles through again, as happened with hose pulley splashes.
         if (GmfConfig.CLIENT.createParticleMode.get() == CreateParticleMode.OFF) {
@@ -71,6 +70,29 @@ public final class CreateParticleOptimizer {
 
     public static boolean shouldSuppressFluidEffects() {
         return GmfConfig.CLIENT.enabled.get()
-                && GmfConfig.CLIENT.createParticleMode.get() == CreateParticleMode.OFF;
+                && (GmfConfig.CLIENT.createParticleMode.get() == CreateParticleMode.OFF
+                || !GmfConfig.CLIENT.renderWaterSplashParticles.get());
+    }
+
+    /**
+     * Categories are deliberately based on the registered particle identifier,
+     * so they also cover vanilla effects triggered by Create (hose pulleys,
+     * drills and saws) before the particles reach the client engine.
+     */
+    private static boolean isAllowedCategory(ResourceLocation id) {
+        if (!GmfConfig.CLIENT.enabled.get()) return true;
+        String path = id.getPath();
+        if (isFluid(path)) return GmfConfig.CLIENT.renderWaterSplashParticles.get();
+        if (path.contains("steam") || path.contains("smoke")) return GmfConfig.CLIENT.renderSteamSmokeParticles.get();
+        if (path.contains("spark") || path.contains("electric")) return GmfConfig.CLIENT.renderSparkParticles.get();
+        if (path.contains("block") || path.contains("terrain") || path.contains("item") || path.contains("poof")) {
+            return GmfConfig.CLIENT.renderItemBreakParticles.get();
+        }
+        return true;
+    }
+
+    private static boolean isFluid(String path) {
+        return HEAVY_VANILLA_FLUID_PARTICLES.contains(path)
+                || path.contains("splash") || path.contains("water") || path.contains("lava") || path.contains("bubble");
     }
 }

@@ -12,6 +12,7 @@ import dev.creategmf.config.MechanismAnimationGroup;
 import dev.creategmf.config.PcProfile;
 import dev.creategmf.client.RendererRestartTracker;
 import dev.creategmf.integration.FlywheelBackendController;
+import dev.creategmf.integration.ModCompatibilityDetector;
 import dev.creategmf.integration.ShaderStatusDetector;
 import dev.creategmf.optimization.animations.DistantAnimationController;
 
@@ -29,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class GmfSettingsScreen extends GmfScreen {
     private static final int MAX_ANIMATION_DISTANCE = 256;
     private static final int[] REDUCED_ANIMATION_FPS = {1, 2, 5, 10, 15, 20, 30};
+    private static final int[] ANIMATION_UPDATE_TICKS = {1, 2, 3, 4, 5};
     private static final PcProfile[] PRESETS = {
             PcProfile.POTATO, PcProfile.LOW, PcProfile.MEDIUM,
             PcProfile.ABOVE_AVERAGE, PcProfile.HIGH, PcProfile.ULTRA
@@ -193,6 +195,12 @@ public final class GmfSettingsScreen extends GmfScreen {
                             GmfConfig.CLIENT.reducedAnimationFps.get()));
                     customAndRefresh();
                 }, mouseX, mouseY);
+        y = cycleRow(graphics, left, y, cardWidth, Component.translatable("config.create_gmf.animation_update_ticks"),
+                Component.translatable("unit.create_gmf.ticks", GmfConfig.CLIENT.animationUpdateTickDivisor.get()), () -> {
+                    GmfConfig.CLIENT.animationUpdateTickDivisor.set(next(ANIMATION_UPDATE_TICKS,
+                            GmfConfig.CLIENT.animationUpdateTickDivisor.get()));
+                    customAndSave();
+                }, mouseX, mouseY);
         endCard(graphics, left, cardTop, cardWidth, y);
 
         y += 12;
@@ -292,6 +300,26 @@ public final class GmfSettingsScreen extends GmfScreen {
                     GmfConfig.CLIENT.filterFluidParticles.set(!GmfConfig.CLIENT.filterFluidParticles.get());
                     customAndSave();
                 }, mouseX, mouseY);
+        y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.render_steam_smoke_particles"),
+                GmfConfig.CLIENT.renderSteamSmokeParticles.get(), () -> {
+                    GmfConfig.CLIENT.renderSteamSmokeParticles.set(!GmfConfig.CLIENT.renderSteamSmokeParticles.get());
+                    customAndSave();
+                }, mouseX, mouseY);
+        y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.render_spark_particles"),
+                GmfConfig.CLIENT.renderSparkParticles.get(), () -> {
+                    GmfConfig.CLIENT.renderSparkParticles.set(!GmfConfig.CLIENT.renderSparkParticles.get());
+                    customAndSave();
+                }, mouseX, mouseY);
+        y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.render_item_break_particles"),
+                GmfConfig.CLIENT.renderItemBreakParticles.get(), () -> {
+                    GmfConfig.CLIENT.renderItemBreakParticles.set(!GmfConfig.CLIENT.renderItemBreakParticles.get());
+                    customAndSave();
+                }, mouseX, mouseY);
+        y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.render_water_splash_particles"),
+                GmfConfig.CLIENT.renderWaterSplashParticles.get(), () -> {
+                    GmfConfig.CLIENT.renderWaterSplashParticles.set(!GmfConfig.CLIENT.renderWaterSplashParticles.get());
+                    customAndSave();
+                }, mouseX, mouseY);
         y = drawWrappedText(graphics, Component.translatable("gui.create_gmf.particles.note"), contentLeft + 12, y + 5,
                 w - 24, 0xFFA9A196);
         endCard(graphics, contentLeft, 78, w, y + 8);
@@ -331,6 +359,12 @@ public final class GmfSettingsScreen extends GmfScreen {
                 contentLeft + 12, y + 8, active ? 0xFFE4BB67 : 0xFF79B96B);
         y = drawWrappedText(graphics, Component.translatable("gui.create_gmf.shaders.note"), contentLeft + 12, y + 30,
                 w - 24, 0xFFA9A196);
+        var overlappingOptimizers = ModCompatibilityDetector.overlappingOptimizers();
+        if (!overlappingOptimizers.isEmpty()) {
+            y = drawWrappedText(graphics,
+                    Component.translatable("gui.create_gmf.compatibility.overlap", String.join(", ", overlappingOptimizers)),
+                    contentLeft + 12, y + 8, w - 24, 0xFFFFC36B);
+        }
         endCard(graphics, contentLeft, 78, w, y + 8);
     }
 
