@@ -10,6 +10,7 @@ import dev.creategmf.config.FlywheelBackendMode;
 import dev.creategmf.config.GmfConfig;
 import dev.creategmf.config.MechanismAnimationGroup;
 import dev.creategmf.config.PcProfile;
+import dev.creategmf.client.RendererRestartTracker;
 import dev.creategmf.integration.FlywheelBackendController;
 import dev.creategmf.integration.ShaderStatusDetector;
 import dev.creategmf.optimization.animations.DistantAnimationController;
@@ -314,8 +315,10 @@ public final class GmfSettingsScreen extends GmfScreen {
                 }, mouseX, mouseY);
         y = drawWrappedText(graphics, Component.translatable("gui.create_gmf.accelerated_renderer_hint"),
                 contentLeft + 12, y + 5, w - 24, 0xFFA9A196);
-        y = drawWrappedText(graphics, Component.translatable("gui.create_gmf.settings.flywheel_hint"), contentLeft + 12,
-                y + 5, w - 24, 0xFFA9A196);
+        if (RendererRestartTracker.isRestartRequired()) {
+            y = drawWrappedText(graphics, Component.translatable("gui.create_gmf.settings.flywheel_hint"), contentLeft + 12,
+                    y + 5, w - 24, 0xFFFF5B52);
+        }
         endCard(graphics, contentLeft, 78, w, y + 8);
     }
 

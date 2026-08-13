@@ -6,10 +6,12 @@
   <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
 
-**Current release: 0.1.4**
+**Current release: 0.1.5**
 
-> **New in 0.1.4:** optional accelerated Create rendering, adapted from
-> CreateBetterFPS by MoePus under the MIT License.
+> **New in 0.1.5:** the restart notice now appears only while the selected
+> Flywheel renderer or Accelerated Rendering setting differs from the current
+> game session. Hose pulley fluid splashes and their repeated fill/drain sound
+> are suppressed when Create particles are set to Off.
 
 Client-side performance controls and in-world diagnostics for **Minecraft Java
 Edition 1.21.1**, **NeoForge**, **Create 6.0.10**, and **Flywheel 1.0.6**.
@@ -31,7 +33,8 @@ simulation.
 - shader detection through the Iris public API;
 - complete English and Russian interface localization.
 - optional **Accelerated Rendering** switch in the Flywheel page. It uses the
-  CreateBetterFPS-derived path only when both Sodium and Iris are present.
+  CreateBetterFPS-derived path only when both Sodium and Iris are present;
+  restart after changing it or the Flywheel renderer.
 
 Press **G** in a world to open the compact menu. Diagnostics run over the live
 world and ask the player to keep the same position and camera direction.
@@ -40,7 +43,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
-| Create: Give Me FPS | 0.1.4 |
+| Create: Give Me FPS | 0.1.5 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -67,7 +70,7 @@ On Linux or macOS:
 The resulting JAR is written to `build/libs/`.
 
 The downloadable release is named
-`Create-Give-Me-FPS-0.1.4-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.5-NeoForge-1.21.1.jar`.
 
 ## Important limitations
 

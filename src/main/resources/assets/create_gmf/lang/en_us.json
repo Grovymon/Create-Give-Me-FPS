@@ -50,7 +50,7 @@
   "gui.create_gmf.settings.presets": "Graphics Preset",
   "gui.create_gmf.settings.presets_hint": "A preset applies all related Create settings at once",
   "gui.create_gmf.settings.flywheel": "Flywheel Backend",
-  "gui.create_gmf.settings.flywheel_hint": "The selection is saved. Restart the game to safely apply the chosen Flywheel renderer.",
+  "gui.create_gmf.settings.flywheel_hint": "Renderer settings changed. Restart the game to apply them.",
   "gui.create_gmf.settings.crushing": "Crushing Wheel Items",
   "gui.create_gmf.settings.crushing_hint": "Off hides only loose item rendering close to crushing wheels",
   "gui.create_gmf.settings.reset_section": "Reset",
@@ -274,7 +274,7 @@
   "recommendation.create_gmf.reason.belt_item_shadows": "Nearby transported items and measured frame pressure make distant item shadows a low-risk candidate.",
 
   "config.create_gmf.accelerated_renderer": "Accelerated Rendering",
-  "gui.create_gmf.accelerated_renderer_hint": "CreateBetterFPS-based rendering optimization by MoePus (MIT). Requires Sodium and Iris. Restart the game after changing it.",
+  "gui.create_gmf.accelerated_renderer_hint": "CreateBetterFPS-based rendering optimization by MoePus (MIT). Requires Sodium and Iris.",
   "unit.create_gmf.mebibytes": "%s MiB",
   "unit.create_gmf.blocks": "%s blocks",
   "unit.create_gmf.gibibytes": "%s GiB"

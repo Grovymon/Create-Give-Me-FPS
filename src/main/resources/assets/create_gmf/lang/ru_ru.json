@@ -50,7 +50,7 @@
   "gui.create_gmf.settings.presets": "Готовая настройка графики",
   "gui.create_gmf.settings.presets_hint": "Профиль сразу применяет связанные настройки Create",
   "gui.create_gmf.settings.flywheel": "Рендерер Flywheel",
-  "gui.create_gmf.settings.flywheel_hint": "Изменение сохранено. Перезапустите игру, чтобы безопасно применить выбранный рендер Flywheel.",
+  "gui.create_gmf.settings.flywheel_hint": "Настройки рендера изменены. Перезапустите игру, чтобы применить их.",
   "gui.create_gmf.settings.crushing": "Предметы у дробильных колёс",
   "gui.create_gmf.settings.crushing_hint": "Выкл. скрывает только отрисовку лежащих предметов рядом с дробильными колёсами",
   "gui.create_gmf.settings.reset_section": "Сброс",
@@ -274,7 +274,7 @@
   "recommendation.create_gmf.reason.belt_item_shadows": "Предметы на лентах и время кадра делают дальние тени безопасным кандидатом.",
 
   "config.create_gmf.accelerated_renderer": "Ускоренный рендер",
-  "gui.create_gmf.accelerated_renderer_hint": "Оптимизация CreateBetterFPS (MoePus, MIT). Требуются Sodium и Iris. После переключения перезапустите игру.",
+  "gui.create_gmf.accelerated_renderer_hint": "Оптимизация CreateBetterFPS (MoePus, MIT). Требуются Sodium и Iris.",
   "unit.create_gmf.mebibytes": "%s МиБ",
   "unit.create_gmf.blocks": "%s блоков",
   "unit.create_gmf.gibibytes": "%s ГиБ"

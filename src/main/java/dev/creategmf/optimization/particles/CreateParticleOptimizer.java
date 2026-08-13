@@ -37,6 +37,11 @@ public final class CreateParticleOptimizer {
         if (!createParticle && !fluidEffect) {
             return true;
         }
+        // "Off" is absolute: per-category switches must not accidentally let
+        // fluid particles through again, as happened with hose pulley splashes.
+        if (GmfConfig.CLIENT.createParticleMode.get() == CreateParticleMode.OFF) {
+            return false;
+        }
         if (createParticle && !GmfConfig.CLIENT.filterCreateParticles.get()) {
             return true;
         }
@@ -62,5 +67,10 @@ public final class CreateParticleOptimizer {
             case REDUCED -> CREATE_PARTICLE_SEQUENCE.getAndIncrement() % 3 == 0;
             case OFF -> false;
         };
+    }
+
+    public static boolean shouldSuppressFluidEffects() {
+        return GmfConfig.CLIENT.enabled.get()
+                && GmfConfig.CLIENT.createParticleMode.get() == CreateParticleMode.OFF;
     }
 }
