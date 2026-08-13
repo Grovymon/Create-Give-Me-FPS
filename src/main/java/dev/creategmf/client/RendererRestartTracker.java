@@ -14,12 +14,20 @@ public final class RendererRestartTracker {
     }
 
     public static void captureLaunchState() {
-        launchState = currentState();
+        if (GmfConfig.SPEC.isLoaded()) {
+            launchState = currentState();
+        }
     }
 
     public static boolean isRestartRequired() {
+        // A mixin can create client-side objects before NeoForge finishes loading
+        // the client config.  Reading ConfigValue#get at that stage crashes startup.
+        if (!GmfConfig.SPEC.isLoaded()) {
+            return false;
+        }
         if (launchState == null) {
             captureLaunchState();
+            return false;
         }
         return !launchState.equals(currentState());
     }

@@ -208,7 +208,12 @@ public final class DistantAnimationController {
     }
 
     public static boolean animationsGloballyDisabled() {
-        return GmfConfig.CLIENT.enabled.get() && GmfConfig.CLIENT.distantAnimationDistance.get() <= 0;
+        // Sprite tickers can run while resources are loading, before the
+        // NeoForge config has been attached.  Treat that short period as normal
+        // rendering instead of reading an unavailable ConfigValue.
+        return GmfConfig.SPEC.isLoaded()
+                && GmfConfig.CLIENT.enabled.get()
+                && GmfConfig.CLIENT.distantAnimationDistance.get() <= 0;
     }
 
     public static boolean shouldSuppressUnpositioned(MechanismAnimationGroup group) {

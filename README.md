@@ -6,12 +6,11 @@
   <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
 
-**Current release: 0.1.5**
+**Current release: 0.1.6**
 
-> **New in 0.1.5:** the restart notice now appears only while the selected
-> Flywheel renderer or Accelerated Rendering setting differs from the current
-> game session. Hose pulley fluid splashes and their repeated fill/drain sound
-> are suppressed when Create particles are set to Off.
+> **New in 0.1.6:** fixed the 0.1.5 startup crash. The mod now waits for
+> NeoForge to load its configuration before reading renderer or animation
+> settings.
 
 Client-side performance controls and in-world diagnostics for **Minecraft Java
 Edition 1.21.1**, **NeoForge**, **Create 6.0.10**, and **Flywheel 1.0.6**.
@@ -43,7 +42,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
-| Create: Give Me FPS | 0.1.5 |
+| Create: Give Me FPS | 0.1.6 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -70,7 +69,7 @@ On Linux or macOS:
 The resulting JAR is written to `build/libs/`.
 
 The downloadable release is named
-`Create-Give-Me-FPS-0.1.5-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.6-NeoForge-1.21.1.jar`.
 
 ## Important limitations
 
