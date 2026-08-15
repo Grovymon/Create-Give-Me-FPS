@@ -6,12 +6,12 @@
   <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
 
-**Current release: 0.1.7**
+**Current release: 0.1.8**
 
-> **New in 0.1.7:** added independent controls for steam/smoke, sparks,
-> item/block-break particles, and water/lava splashes; added a visual-update
-> divider for Create animations and a compatibility warning for overlapping
-> CreateBetterFPS or Flerovium installations.
+> **New in 0.1.8:** full-animation distance can be dragged or typed as a value
+> from 0 to 256; cycle controls support right-click to go backwards; all custom
+> controls use the Minecraft click sound; and hover tooltips explain animation,
+> particle, and Flywheel renderer choices.
 
 Client-side performance controls and in-world diagnostics for **Minecraft Java
 Edition 1.21.1**, **NeoForge**, **Create 6.0.10**, and **Flywheel 1.0.6**.
@@ -45,7 +45,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
-| Create: Give Me FPS | 0.1.7 |
+| Create: Give Me FPS | 0.1.8 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -72,7 +72,7 @@ On Linux or macOS:
 The resulting JAR is written to `build/libs/`.
 
 The downloadable release is named
-`Create-Give-Me-FPS-0.1.7-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.8-NeoForge-1.21.1.jar`.
 
 ## Important limitations
 

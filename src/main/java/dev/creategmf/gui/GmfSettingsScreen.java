@@ -20,8 +20,10 @@ import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 
 /**
  * The settings screen intentionally uses lightweight hand-drawn controls instead
@@ -39,8 +41,10 @@ public final class GmfSettingsScreen extends GmfScreen {
     private static final ResourceLocation MOD_ICON = ResourceLocation.fromNamespaceAndPath("create_gmf", "textures/gui/logo.png");
 
     private final List<HitArea> hitAreas = new ArrayList<>();
+    private final List<TooltipArea> tooltipAreas = new ArrayList<>();
     private Page page = Page.MECHANISMS;
     private EditBox searchBox;
+    private EditBox animationDistanceInput;
     private String search = "";
     private int panelLeft;
     private int panelRight;
@@ -54,6 +58,12 @@ public final class GmfSettingsScreen extends GmfScreen {
     private int maxScroll;
     private int drawnContentBottom;
     private boolean drawingScrollableContent;
+    private boolean draggingAnimationDistance;
+    private int animationSliderLeft;
+    private int animationSliderRight;
+    private int animationSliderTop;
+    private int animationSliderBottom;
+    private java.util.function.IntConsumer animationSliderSetter;
 
     public GmfSettingsScreen(Screen parent) {
         super(Component.translatable("gui.create_gmf.rendering_settings"), parent);
@@ -69,6 +79,21 @@ public final class GmfSettingsScreen extends GmfScreen {
             removeWidget(searchBox);
             searchBox = null;
         }
+        if (animationDistanceInput != null) {
+            removeWidget(animationDistanceInput);
+            animationDistanceInput = null;
+        }
+        if (page == Page.MECHANISMS && !individualMechanismsOpen) {
+            animationDistanceInput = new EditBox(font, 0, 0, 1, 18,
+                    Component.translatable("config.create_gmf.animation_distance_slider"));
+            animationDistanceInput.setMaxLength(3);
+            animationDistanceInput.setFilter(value -> value.isEmpty() || value.matches("\\d{1,3}"));
+            animationDistanceInput.setBordered(false);
+            animationDistanceInput.setTextColor(0xFFE0DDD6);
+            animationDistanceInput.setValue(Integer.toString(GmfConfig.CLIENT.distantAnimationDistance.get().intValue()));
+            animationDistanceInput.setResponder(this::applyAnimationDistanceText);
+            addRenderableWidget(animationDistanceInput);
+        }
         if (page != Page.MECHANISMS || !individualMechanismsOpen) {
             return;
         }
@@ -83,6 +108,8 @@ public final class GmfSettingsScreen extends GmfScreen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         drawShell(graphics);
         hitAreas.clear();
+        tooltipAreas.clear();
+        animationSliderSetter = null;
         drawTopBar(graphics, mouseX, mouseY);
         drawNavigation(graphics, mouseX, mouseY);
         beginContent();
@@ -111,6 +138,7 @@ public final class GmfSettingsScreen extends GmfScreen {
         scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
         drawScrollbar(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
+        drawTooltips(graphics, mouseX, mouseY);
     }
 
     private void drawShell(GuiGraphics graphics) {
@@ -179,28 +207,37 @@ public final class GmfSettingsScreen extends GmfScreen {
                 allMechanismsEnabled(), this::toggleAllMechanisms, mouseX, mouseY);
         y = sliderRow(graphics, left, y, cardWidth, Component.translatable("config.create_gmf.animation_distance_slider"),
                 GmfConfig.CLIENT.distantAnimationDistance.get().intValue(), 0, MAX_ANIMATION_DISTANCE,
-                value -> {
-                    GmfConfig.CLIENT.distantAnimationDistance.set((double) value);
-                    customAndRefresh();
-                }, mouseX, mouseY);
+                this::setAnimationDistance, Component.translatable("tooltip.create_gmf.animation_distance"), mouseX, mouseY);
         y = cycleRow(graphics, left, y, cardWidth, Component.translatable("gui.create_gmf.distant_animation_mode"),
                 Component.translatable(GmfConfig.CLIENT.distantAnimationMode.get().translationKey()), () -> {
                     GmfConfig.CLIENT.distantAnimationMode.set(next(DistantAnimationMode.values(),
                             GmfConfig.CLIENT.distantAnimationMode.get()));
                     customAndRefresh();
-                }, mouseX, mouseY);
+                }, () -> {
+                    GmfConfig.CLIENT.distantAnimationMode.set(previous(DistantAnimationMode.values(),
+                            GmfConfig.CLIENT.distantAnimationMode.get()));
+                    customAndRefresh();
+                }, Component.translatable("tooltip.create_gmf.distant_animation_mode"), mouseX, mouseY);
         y = cycleRow(graphics, left, y, cardWidth, Component.translatable("config.create_gmf.reduced_animation_fps"),
                 Component.translatable("unit.create_gmf.fps", GmfConfig.CLIENT.reducedAnimationFps.get()), () -> {
                     GmfConfig.CLIENT.reducedAnimationFps.set(next(REDUCED_ANIMATION_FPS,
                             GmfConfig.CLIENT.reducedAnimationFps.get()));
                     customAndRefresh();
-                }, mouseX, mouseY);
+                }, () -> {
+                    GmfConfig.CLIENT.reducedAnimationFps.set(previous(REDUCED_ANIMATION_FPS,
+                            GmfConfig.CLIENT.reducedAnimationFps.get()));
+                    customAndRefresh();
+                }, Component.translatable("tooltip.create_gmf.reduced_animation_fps"), mouseX, mouseY);
         y = cycleRow(graphics, left, y, cardWidth, Component.translatable("config.create_gmf.animation_update_ticks"),
                 Component.translatable("unit.create_gmf.ticks", GmfConfig.CLIENT.animationUpdateTickDivisor.get()), () -> {
                     GmfConfig.CLIENT.animationUpdateTickDivisor.set(next(ANIMATION_UPDATE_TICKS,
                             GmfConfig.CLIENT.animationUpdateTickDivisor.get()));
                     customAndSave();
-                }, mouseX, mouseY);
+                }, () -> {
+                    GmfConfig.CLIENT.animationUpdateTickDivisor.set(previous(ANIMATION_UPDATE_TICKS,
+                            GmfConfig.CLIENT.animationUpdateTickDivisor.get()));
+                    customAndSave();
+                }, Component.translatable("tooltip.create_gmf.animation_update_ticks"), mouseX, mouseY);
         endCard(graphics, left, cardTop, cardWidth, y);
 
         y += 12;
@@ -289,7 +326,11 @@ public final class GmfSettingsScreen extends GmfScreen {
                     GmfConfig.CLIENT.createParticleMode.set(next(CreateParticleMode.values(),
                             GmfConfig.CLIENT.createParticleMode.get()));
                     customAndSave();
-                }, mouseX, mouseY);
+                }, () -> {
+                    GmfConfig.CLIENT.createParticleMode.set(previous(CreateParticleMode.values(),
+                            GmfConfig.CLIENT.createParticleMode.get()));
+                    customAndSave();
+                }, Component.translatable("tooltip.create_gmf.create_particles"), mouseX, mouseY);
         y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.filter_create_particles"),
                 GmfConfig.CLIENT.filterCreateParticles.get(), () -> {
                     GmfConfig.CLIENT.filterCreateParticles.set(!GmfConfig.CLIENT.filterCreateParticles.get());
@@ -335,7 +376,12 @@ public final class GmfSettingsScreen extends GmfScreen {
                     GmfConfig.CLIENT.flywheelBackend.set(next);
                     GmfConfig.save();
                     FlywheelBackendController.apply(next);
-                  }, mouseX, mouseY);
+                  }, () -> {
+                    FlywheelBackendMode previous = previous(FlywheelBackendMode.values(), GmfConfig.CLIENT.flywheelBackend.get());
+                    GmfConfig.CLIENT.flywheelBackend.set(previous);
+                    GmfConfig.save();
+                    FlywheelBackendController.apply(previous);
+                  }, Component.translatable("tooltip.create_gmf.flywheel_renderer"), mouseX, mouseY);
         y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.accelerated_renderer"),
                 GmfConfig.CLIENT.acceleratedRenderer.get(), () -> {
                     GmfConfig.CLIENT.acceleratedRenderer.set(!GmfConfig.CLIENT.acceleratedRenderer.get());
@@ -427,29 +473,40 @@ public final class GmfSettingsScreen extends GmfScreen {
     }
 
     private int cycleRow(GuiGraphics graphics, int x, int y, int width, Component label, Component value,
-            Runnable action, int mouseX, int mouseY) {
+            Runnable forwardAction, Runnable backwardAction, Component tooltip, int mouseX, int mouseY) {
         int valueWidth = Math.min(150, Math.max(108, width / 3));
-        drawRowLabel(graphics, x, y, width - valueWidth - 20, label);
+        int labelBottom = drawWrappedRowLabel(graphics, x, y, width - valueWidth - 20, label);
         int valueX = x + width - valueWidth - 10;
         drawValue(graphics, valueX, y - 3, valueWidth, value, mouseX, mouseY);
-        addHitArea(valueX, y - 3, valueWidth, 20, action);
-        return y + 29;
+        addHitArea(valueX, y - 3, valueWidth, 20, forwardAction, backwardAction);
+        addTooltipArea(x, y, width, Math.max(20, labelBottom - y + 4), tooltip);
+        return Math.max(y + 29, labelBottom + 10);
     }
 
     private int sliderRow(GuiGraphics graphics, int x, int y, int width, Component label, int value, int min, int max,
-            java.util.function.IntConsumer setter, int mouseX, int mouseY) {
-        drawRowLabel(graphics, x, y, width - 145, label);
+            java.util.function.IntConsumer setter, Component tooltip, int mouseX, int mouseY) {
+        int labelBottom = drawWrappedRowLabel(graphics, x, y, width - 145, label);
         int barLeft = x + width - 132;
         int barRight = x + width - 50;
         graphics.fill(barLeft, y + 7, barRight, y + 9, 0xFF594832);
         int knob = barLeft + (int) ((barRight - barLeft) * (value - min) / (double) (max - min));
         graphics.fill(knob - 3, y + 3, knob + 4, y + 13, 0xFFE4BB67);
         drawValue(graphics, x + width - 44, y - 3, 38, Component.literal(Integer.toString(value)), mouseX, mouseY);
-        addHitArea(barLeft, y - 3, barRight - barLeft, 22, () -> {
-            double fraction = Math.clamp((mouseX - barLeft) / (double) Math.max(1, barRight - barLeft), 0, 1);
-            setter.accept((int) Math.round(min + fraction * (max - min)));
-        });
-        return y + 29;
+        animationSliderLeft = barLeft;
+        animationSliderRight = barRight;
+        animationSliderTop = y - scrollOffset - 3;
+        animationSliderBottom = animationSliderTop + 22;
+        animationSliderSetter = setter;
+        if (animationDistanceInput != null) {
+            animationDistanceInput.setX(x + width - 42);
+            animationDistanceInput.setY(y - scrollOffset - 1);
+            animationDistanceInput.setWidth(34);
+            animationDistanceInput.setHeight(16);
+            animationDistanceInput.visible = animationDistanceInput.getY() >= 78
+                    && animationDistanceInput.getY() + animationDistanceInput.getHeight() <= contentViewportBottom();
+        }
+        addTooltipArea(x, y, width, Math.max(22, labelBottom - y + 5), tooltip);
+        return Math.max(y + 29, labelBottom + 10);
     }
 
     private void drawRowLabel(GuiGraphics graphics, int x, int y, int width, Component label) {
@@ -529,9 +586,29 @@ public final class GmfSettingsScreen extends GmfScreen {
     }
 
     private void addHitArea(int x, int y, int width, int height, Runnable action) {
+        addHitArea(x, y, width, height, action, null);
+    }
+
+    private void addHitArea(int x, int y, int width, int height, Runnable primaryAction, Runnable secondaryAction) {
         int screenY = drawingScrollableContent ? y - scrollOffset : y;
         if (drawingScrollableContent && (screenY + height <= 78 || screenY >= contentViewportBottom())) return;
-        hitAreas.add(new HitArea(x, screenY, width, height, action));
+        hitAreas.add(new HitArea(x, screenY, width, height, primaryAction, secondaryAction));
+    }
+
+    private void addTooltipArea(int x, int y, int width, int height, Component tooltip) {
+        int screenY = drawingScrollableContent ? y - scrollOffset : y;
+        if (drawingScrollableContent && (screenY + height <= 78 || screenY >= contentViewportBottom())) return;
+        tooltipAreas.add(new TooltipArea(x, screenY, width, height, tooltip));
+    }
+
+    private void drawTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
+        for (int index = tooltipAreas.size() - 1; index >= 0; index--) {
+            TooltipArea area = tooltipAreas.get(index);
+            if (area.contains(mouseX, mouseY)) {
+                graphics.renderTooltip(font, area.tooltip(), mouseX, mouseY);
+                return;
+            }
+        }
     }
 
     private void outline(GuiGraphics graphics, int left, int top, int right, int bottom, int color) {
@@ -592,6 +669,42 @@ public final class GmfSettingsScreen extends GmfScreen {
         DistantAnimationController.refreshLoadedKinetics();
     }
 
+    private void applyAnimationDistanceText(String text) {
+        if (text.isBlank()) return;
+        try {
+            setAnimationDistance(Math.clamp(Integer.parseInt(text), 0, MAX_ANIMATION_DISTANCE));
+        } catch (NumberFormatException ignored) {
+            // The input filter permits digits only; keeping the last valid setting is intentional.
+        }
+    }
+
+    private void setAnimationDistance(int value) {
+        int clamped = Math.clamp(value, 0, MAX_ANIMATION_DISTANCE);
+        GmfConfig.CLIENT.distantAnimationDistance.set((double) clamped);
+        if (animationDistanceInput != null && !animationDistanceInput.isFocused()) {
+            animationDistanceInput.setValue(Integer.toString(clamped));
+        }
+        customAndRefresh();
+    }
+
+    private boolean isOverAnimationSlider(double mouseX, double mouseY) {
+        return animationSliderSetter != null && mouseX >= animationSliderLeft && mouseX < animationSliderRight
+                && mouseY >= animationSliderTop && mouseY < animationSliderBottom;
+    }
+
+    private void updateAnimationSlider(double mouseX) {
+        if (animationSliderSetter == null) return;
+        double fraction = Math.clamp((mouseX - animationSliderLeft)
+                / (double) Math.max(1, animationSliderRight - animationSliderLeft), 0.0D, 1.0D);
+        animationSliderSetter.accept((int) Math.round(fraction * MAX_ANIMATION_DISTANCE));
+    }
+
+    private void playClickSound() {
+        if (minecraft != null) {
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        }
+    }
+
     private void switchPage(Page newPage) {
         if (page == newPage) return;
         page = newPage;
@@ -602,16 +715,44 @@ public final class GmfSettingsScreen extends GmfScreen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+        if (button == 0 && isOverAnimationSlider(mouseX, mouseY)) {
+            draggingAnimationDistance = true;
+            updateAnimationSlider(mouseX);
+            playClickSound();
+            return true;
+        }
+        if (button == 0 || button == 1) {
             for (int index = hitAreas.size() - 1; index >= 0; index--) {
                 HitArea area = hitAreas.get(index);
                 if (area.contains(mouseX, mouseY)) {
-                    area.action.run();
+                    if (button == 1 && area.secondaryAction() == null) continue;
+                    Runnable action = button == 1 && area.secondaryAction() != null
+                            ? area.secondaryAction() : area.primaryAction();
+                    action.run();
+                    playClickSound();
                     return true;
                 }
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (draggingAnimationDistance && button == 0) {
+            updateAnimationSlider(mouseX);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0 && draggingAnimationDistance) {
+            draggingAnimationDistance = false;
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
@@ -645,7 +786,25 @@ public final class GmfSettingsScreen extends GmfScreen {
         return values[0];
     }
 
-    private record HitArea(int x, int y, int width, int height, Runnable action) {
+    private static <T> T previous(T[] values, T current) {
+        for (int index = 0; index < values.length; index++) {
+            if (values[index] == current) return values[(index - 1 + values.length) % values.length];
+        }
+        return values[values.length - 1];
+    }
+
+    private static int previous(int[] values, int current) {
+        for (int index = values.length - 1; index >= 0; index--) if (values[index] < current) return values[index];
+        return values[values.length - 1];
+    }
+
+    private record HitArea(int x, int y, int width, int height, Runnable primaryAction, Runnable secondaryAction) {
+        private boolean contains(double mouseX, double mouseY) {
+            return mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
+        }
+    }
+
+    private record TooltipArea(int x, int y, int width, int height, Component tooltip) {
         private boolean contains(double mouseX, double mouseY) {
             return mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
         }
