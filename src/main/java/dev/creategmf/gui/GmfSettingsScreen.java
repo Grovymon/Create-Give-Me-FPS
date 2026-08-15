@@ -446,11 +446,23 @@ public final class GmfSettingsScreen extends GmfScreen {
                     GmfConfig.save();
                 }, mouseX, mouseY);
         if (GmfConfig.CLIENT.developerMode.get()) {
-            y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.developer_logging"),
-                    GmfConfig.CLIENT.developerLogging.get(), () -> {
-                        GmfConfig.CLIENT.developerLogging.set(!GmfConfig.CLIENT.developerLogging.get());
-                        GmfConfig.save();
-                    }, mouseX, mouseY);
+            // Recording is deliberately an explicit action rather than a tiny
+            // checkbox: the user can clearly see whether diagnostics are
+            // currently writing reports and can stop them in one click.
+            boolean recording = GmfConfig.CLIENT.developerLogging.get();
+            int loggingButtonWidth = Math.min(240, w - 24);
+            drawAction(graphics, contentLeft + 12, y, loggingButtonWidth,
+                    Component.translatable(recording ? "gui.create_gmf.developer.stop_logging"
+                            : "gui.create_gmf.developer.start_logging"),
+                    false, mouseX, mouseY);
+            addHitArea(contentLeft + 12, y, loggingButtonWidth, 28, () -> {
+                GmfConfig.CLIENT.developerLogging.set(!GmfConfig.CLIENT.developerLogging.get());
+                GmfConfig.save();
+            });
+            graphics.drawString(font, Component.translatable(recording ? "gui.create_gmf.developer.logging_active"
+                    : "gui.create_gmf.developer.logging_inactive"), contentLeft + 20 + loggingButtonWidth, y + 10,
+                    recording ? 0xFF79B96B : 0xFFA9A196);
+            y += 38;
             y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.developer_auto_spikes"),
                     GmfConfig.CLIENT.automaticSpikeDetection.get(), () -> {
                         GmfConfig.CLIENT.automaticSpikeDetection.set(!GmfConfig.CLIENT.automaticSpikeDetection.get());
