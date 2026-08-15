@@ -559,16 +559,32 @@ public final class GmfSettingsScreen extends GmfScreen {
         animationSliderBottom = animationSliderTop + 22;
         animationSliderSetter = setter;
         if (animationDistanceInput != null) {
-            animationDistanceInput.setX(x + width - 42);
+            // EditBox itself only supports left-aligned text.  Position its
+            // narrow, borderless edit area around the centre of our value box
+            // so the visible number (and its caret) stay centred as it changes.
+            String inputValue = animationDistanceInput.getValue();
+            int textWidth = Math.max(font.width(inputValue), font.width("0"));
+            int inputWidth = textWidth + 2;
+            animationDistanceInput.setX(inputX + (38 - inputWidth) / 2);
             animationDistanceInput.setY(y - scrollOffset - 1);
-            animationDistanceInput.setWidth(34);
+            animationDistanceInput.setWidth(inputWidth);
             animationDistanceInput.setHeight(16);
             animationDistanceInput.visible = animationDistanceInput.getY() >= 78
                     && animationDistanceInput.getY() + animationDistanceInput.getHeight() <= contentViewportBottom();
+            // Keep the complete visual value field clickable, even though the
+            // edit control is intentionally only as wide as its centred text.
+            addHitArea(inputX, y - 3, 38, 20, this::focusAnimationDistanceInput);
         }
         // Keep the hint on the label instead of the slider or number field.
         addTooltipArea(x, y, width - 145, Math.max(22, labelBottom - y + 5), tooltip);
         return Math.max(y + 29, labelBottom + 10);
+    }
+
+    private void focusAnimationDistanceInput() {
+        if (animationDistanceInput == null) return;
+        setFocused(animationDistanceInput);
+        animationDistanceInput.setFocused(true);
+        animationDistanceInput.setCursorPosition(animationDistanceInput.getValue().length());
     }
 
     private void drawRowLabel(GuiGraphics graphics, int x, int y, int width, Component label) {
