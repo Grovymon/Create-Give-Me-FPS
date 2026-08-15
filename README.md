@@ -49,8 +49,6 @@ during startup.
 
 ## Developer Mode and reports
 
-Press **G** in a loaded world to open the menu. Developer Mode provides:
-
 - **Start recording** — immediately creates `logs/GMF/<timestamp>/` with
   session metadata;
 - **Save report** — writes a snapshot now;
