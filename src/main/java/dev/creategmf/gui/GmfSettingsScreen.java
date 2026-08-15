@@ -566,7 +566,10 @@ public final class GmfSettingsScreen extends GmfScreen {
             int textWidth = Math.max(font.width(inputValue), font.width("0"));
             int inputWidth = textWidth + 2;
             animationDistanceInput.setX(inputX + (38 - inputWidth) / 2);
-            animationDistanceInput.setY(y - scrollOffset - 1);
+            // The surrounding value box is 20 px tall and the Minecraft font
+            // is 9 px tall.  Put the text baseline in the visual centre rather
+            // than at the top edge of the borderless EditBox.
+            animationDistanceInput.setY(y - scrollOffset + 2);
             animationDistanceInput.setWidth(inputWidth);
             animationDistanceInput.setHeight(16);
             animationDistanceInput.visible = animationDistanceInput.getY() >= 78
