@@ -45,6 +45,7 @@ public final class GmfSettingsScreen extends GmfScreen {
     private Page page = Page.MECHANISMS;
     private EditBox searchBox;
     private EditBox animationDistanceInput;
+    private boolean syncingAnimationDistanceInput;
     private String search = "";
     private int panelLeft;
     private int panelRight;
@@ -479,7 +480,9 @@ public final class GmfSettingsScreen extends GmfScreen {
         int valueX = x + width - valueWidth - 10;
         drawValue(graphics, valueX, y - 3, valueWidth, value, mouseX, mouseY);
         addHitArea(valueX, y - 3, valueWidth, 20, forwardAction, backwardAction);
-        addTooltipArea(x, y, width, Math.max(20, labelBottom - y + 4), tooltip);
+        // Tooltips belong to the explanation text only.  The value box remains a
+        // purely interactive control, so hovering it never obscures the option.
+        addTooltipArea(x, y, width - valueWidth - 20, Math.max(20, labelBottom - y + 4), tooltip);
         return Math.max(y + 29, labelBottom + 10);
     }
 
@@ -505,7 +508,8 @@ public final class GmfSettingsScreen extends GmfScreen {
             animationDistanceInput.visible = animationDistanceInput.getY() >= 78
                     && animationDistanceInput.getY() + animationDistanceInput.getHeight() <= contentViewportBottom();
         }
-        addTooltipArea(x, y, width, Math.max(22, labelBottom - y + 5), tooltip);
+        // Keep the hint on the label instead of the slider or number field.
+        addTooltipArea(x, y, width - 145, Math.max(22, labelBottom - y + 5), tooltip);
         return Math.max(y + 29, labelBottom + 10);
     }
 
@@ -670,6 +674,7 @@ public final class GmfSettingsScreen extends GmfScreen {
     }
 
     private void applyAnimationDistanceText(String text) {
+        if (syncingAnimationDistanceInput) return;
         if (text.isBlank()) return;
         try {
             setAnimationDistance(Math.clamp(Integer.parseInt(text), 0, MAX_ANIMATION_DISTANCE));
@@ -682,7 +687,14 @@ public final class GmfSettingsScreen extends GmfScreen {
         int clamped = Math.clamp(value, 0, MAX_ANIMATION_DISTANCE);
         GmfConfig.CLIENT.distantAnimationDistance.set((double) clamped);
         if (animationDistanceInput != null && !animationDistanceInput.isFocused()) {
-            animationDistanceInput.setValue(Integer.toString(clamped));
+            // EditBox#setValue notifies its responder.  Suppress that callback
+            // while a slider drag synchronizes the visible numeric field.
+            syncingAnimationDistanceInput = true;
+            try {
+                animationDistanceInput.setValue(Integer.toString(clamped));
+            } finally {
+                syncingAnimationDistanceInput = false;
+            }
         }
         customAndRefresh();
     }
