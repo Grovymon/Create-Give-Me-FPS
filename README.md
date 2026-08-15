@@ -13,6 +13,35 @@ Create: Give Me FPS reduces selected *client-side visual work* in large Create
 factories. It does not change recipes, inventories, stress networks, machine
 logic, or server simulation.
 
+## 0.1.2 — changes since 0.1.1
+
+**Delivery summary: 19 engineering changes — 14 direct bug fixes and 5 feature
+improvements.** The count is based on the published commits between 0.1.1 and
+0.1.2; documentation and release-only commits are not counted as fixes.
+
+- Added Developer Mode with a bounded local frame-history recorder.
+- Added **Start recording** and **Stop and save**. Starting creates a
+  timestamped session immediately; stopping always writes a final snapshot.
+- **Save report** now writes a snapshot immediately. A missing `events`
+  directory is recreated before every write, so it cannot discard a report.
+- Added nearby Create-scene census, automatic frame-spike captures, and local
+  reports in `logs/GMF/`.
+- Strengthened direct suppression of supported Create fluid effects, including
+  hose-related fluid-rendering paths.
+- Added an optional CreateBetterFPS-derived accelerated renderer toggle with
+  preserved MIT attribution.
+
+### Fixed regressions
+
+- animation-distance slider crashes, duplicate/overlapping values, clipping,
+  missing slider-to-number synchronisation, and unusable precision;
+- animation-distance range and ticks are now limited to a stable 0–32 blocks;
+- settings value layout, wrapping, tooltips, and developer diagnostic status;
+- early config access during startup;
+- hose fluid-effect filtering and its diagnostic reporting;
+- immediate report saving, missing `events` folder recovery, and report loss
+  when starting or stopping a recording.
+
 ## Controls
 
 ### Factory visuals
@@ -48,6 +77,8 @@ restart. The selected value is saved immediately, but the renderer is chosen
 during startup.
 
 ## Developer Mode and reports
+
+Press **G** in a loaded world to open the menu. Developer Mode provides:
 
 - **Start recording** — immediately creates `logs/GMF/<timestamp>/` with
   session metadata;
