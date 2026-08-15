@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class FluidManipulationBehaviourMixin {
     @Inject(method = "playEffect", at = @At("HEAD"), cancellable = true, require = 0)
     private void createGmf$skipFluidEffect(Level level, BlockPos position, Fluid fluid, boolean filling, CallbackInfo ci) {
-        if (CreateParticleOptimizer.shouldSuppressFluidEffects()) {
+        if (CreateParticleOptimizer.suppressDirectFluidEffect()) {
             ci.cancel();
         }
     }

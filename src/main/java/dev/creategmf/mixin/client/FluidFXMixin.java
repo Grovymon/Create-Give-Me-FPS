@@ -18,7 +18,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class FluidFXMixin {
     @Inject(method = "splash", at = @At("HEAD"), cancellable = true, require = 0)
     private static void createGmf$skipSplash(BlockPos position, FluidStack fluid, CallbackInfo ci) {
-        if (CreateParticleOptimizer.shouldSuppressFluidEffects()) {
+        if (CreateParticleOptimizer.suppressDirectFluidEffect()) {
+            ci.cancel();
+        }
+    }
+
+    /**
+     * Defence in depth for all direct FluidFX paths.  Hose pulley splashes use
+     * this private helper to create twenty vanilla BLOCK particles at a time;
+     * cancelling here prevents them even if another mod bypasses the packet
+     * route and calls FluidFX directly.
+     */
+    @Inject(method = "particle", at = @At("HEAD"), cancellable = true, require = 0)
+    private static void createGmf$skipDirectFluidParticle(ParticleOptions particle, Vec3 position, Vec3 velocity,
+            CallbackInfo ci) {
+        if (CreateParticleOptimizer.suppressDirectFluidEffect()) {
             ci.cancel();
         }
     }
@@ -26,7 +40,7 @@ public abstract class FluidFXMixin {
     @Inject(method = "spawnRimParticles", at = @At("HEAD"), cancellable = true, require = 0)
     private static void createGmf$skipRimParticles(Level level, BlockPos position, Direction direction, int count,
             ParticleOptions particle, float spread, CallbackInfo ci) {
-        if (CreateParticleOptimizer.shouldSuppressFluidEffects()) {
+        if (CreateParticleOptimizer.suppressDirectFluidEffect()) {
             ci.cancel();
         }
     }
@@ -34,7 +48,7 @@ public abstract class FluidFXMixin {
     @Inject(method = "spawnPouringLiquid", at = @At("HEAD"), cancellable = true, require = 0)
     private static void createGmf$skipPouringParticles(Level level, BlockPos position, int count,
             ParticleOptions particle, float spread, Vec3 direction, boolean inward, CallbackInfo ci) {
-        if (CreateParticleOptimizer.shouldSuppressFluidEffects()) {
+        if (CreateParticleOptimizer.suppressDirectFluidEffect()) {
             ci.cancel();
         }
     }

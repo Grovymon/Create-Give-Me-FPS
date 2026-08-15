@@ -98,7 +98,7 @@ public final class DeveloperDiagnostics {
         nextSample = (nextSample + 1) % SAMPLE_CAPACITY;
         sampleCount = Math.min(SAMPLE_CAPACITY, sampleCount + 1);
 
-        if (GmfConfig.CLIENT.automaticSpikeDetection.get() && pendingCapture == null
+        if (hasLiveScene() && GmfConfig.CLIENT.automaticSpikeDetection.get() && pendingCapture == null
                 && now - lastAutoEventNanos >= COOLDOWN_NANOS) {
             String type = automaticEventType(durationNanos, baseline);
             if (type != null) {
@@ -163,6 +163,12 @@ public final class DeveloperDiagnostics {
         if (frame >= LONG_FRAME_NANOS) return "LONG_FRAME";
         if (frame >= SPIKE_MIN_NANOS && frame >= baseline * SPIKE_FACTOR) return "FRAME_SPIKE";
         return null;
+    }
+
+    /** Do not write automatic "spike" reports from menus or world loading. */
+    private boolean hasLiveScene() {
+        Minecraft minecraft = Minecraft.getInstance();
+        return minecraft.level != null && minecraft.player != null && latestScene.chunksScanned() > 0;
     }
 
     private void scheduleCapture(String type, long now, long frame, long baseline, boolean automatic) {
@@ -253,7 +259,7 @@ public final class DeveloperDiagnostics {
                 GmfConfig.CLIENT.distantAnimationMode.get().name(), GmfConfig.CLIENT.flywheelBackend.get().name(),
                 GmfConfig.CLIENT.acceleratedRenderer.get(), ShaderStatusDetector.isShaderPackActive(),
                 String.join(", ", ModCompatibilityDetector.overlappingOptimizers()), particles.steamSmoke(),
-                particles.sparks(), particles.itemBreak(), particles.fluidSplash());
+                particles.sparks(), particles.itemBreak(), particles.fluidSplash(), particles.directFluidEffectsSuppressed());
     }
 
     private void writeSessionFiles(Path session, String sessionLog, String sessionJson, String mods) {
@@ -350,7 +356,8 @@ public final class DeveloperDiagnostics {
                 .append('\n');
         result.append("Particle categories (cumulative requests): steam_smoke=").append(state.steamSmoke())
                 .append(", sparks=").append(state.sparks()).append(", item_break=").append(state.itemBreak())
-                .append(", fluid_splash=").append(state.fluidSplash()).append('\n');
+                .append(", fluid_splash=").append(state.fluidSplash())
+                .append(", direct_fluid_effects_suppressed=").append(state.directFluidEffectsSuppressed()).append('\n');
         return result.toString();
     }
 
@@ -368,7 +375,8 @@ public final class DeveloperDiagnostics {
                 .append("\", \"gmfEnabled\": ").append(state.gmfEnabled())
                 .append(", \"beltItemsEnabled\": ").append(state.beltItemsEnabled())
                 .append(", \"particleMode\": \"").append(json(state.particleMode()))
-                .append("\", \"distantAnimationMode\": \"").append(json(state.animationMode()))
+                .append("\", \"directFluidEffectsSuppressed\": ").append(state.directFluidEffectsSuppressed())
+                .append(", \"distantAnimationMode\": \"").append(json(state.animationMode()))
                 .append("\", \"acceleratedRenderer\": ").append(state.acceleratedRenderer()).append("},\n");
         result.append("  \"nearbyScan\": ").append(sceneJson(capture.sceneAtTrigger())).append(",\n");
         result.append("  \"samples\": [\n");
@@ -487,7 +495,7 @@ public final class DeveloperDiagnostics {
     private record RuntimeState(boolean animationHookSeen, boolean beltItemHookSeen, boolean particleHookSeen,
             boolean gmfEnabled, boolean beltItemsEnabled, String particleMode, String animationMode,
             String flywheelBackend, boolean acceleratedRenderer, boolean shaderActive, String overlappingOptimizers,
-            long steamSmoke, long sparks, long itemBreak, long fluidSplash) {
+            long steamSmoke, long sparks, long itemBreak, long fluidSplash, long directFluidEffectsSuppressed) {
     }
 
     private record Sample(long timeNanos, long frameNanos, long baselineNanos, long particleRequests,

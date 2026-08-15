@@ -22,6 +22,7 @@ public final class CreateParticleOptimizer {
     private static long sparks;
     private static long itemBreak;
     private static long fluidSplash;
+    private static long directFluidEffectsSuppressed;
     /** Hose pulleys emit these normal Minecraft fluid effects at the submerged end. */
     private static final Set<String> HEAVY_VANILLA_FLUID_PARTICLES = Set.of(
             "bubble", "bubble_pop", "splash", "dripping_water", "falling_water",
@@ -100,6 +101,19 @@ public final class CreateParticleOptimizer {
     }
 
     /**
+     * Marks one of Create's direct FluidFX calls as discarded.  These calls do
+     * not always traverse the ordinary particle factory (notably the 20 block
+     * particles emitted by a hose pulley splash), so keeping this counter
+     * separate makes the developer report prove that the early hook fired.
+     */
+    public static boolean suppressDirectFluidEffect() {
+        if (!shouldSuppressFluidEffects()) return false;
+        GmfRuntimeStatus.markParticleHook();
+        directFluidEffectsSuppressed++;
+        return true;
+    }
+
+    /**
      * Categories are deliberately based on the registered particle identifier,
      * so they also cover vanilla effects triggered by Create (hose pulleys,
      * drills and saws) before the particles reach the client engine.
@@ -122,7 +136,8 @@ public final class CreateParticleOptimizer {
     }
 
     public static ParticleCounters counters() {
-        return new ParticleCounters(requests, allowed, suppressed, steamSmoke, sparks, itemBreak, fluidSplash);
+        return new ParticleCounters(requests, allowed, suppressed, steamSmoke, sparks, itemBreak, fluidSplash,
+                directFluidEffectsSuppressed);
     }
 
     private static Category category(String path) {
@@ -148,6 +163,6 @@ public final class CreateParticleOptimizer {
     private enum Category { STEAM_SMOKE, SPARKS, ITEM_BREAK, FLUID_SPLASH, OTHER }
 
     public record ParticleCounters(long requests, long allowed, long suppressed, long steamSmoke, long sparks,
-            long itemBreak, long fluidSplash) {
+            long itemBreak, long fluidSplash, long directFluidEffectsSuppressed) {
     }
 }

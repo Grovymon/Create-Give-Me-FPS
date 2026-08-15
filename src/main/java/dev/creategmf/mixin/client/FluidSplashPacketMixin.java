@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class FluidSplashPacketMixin {
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true, require = 0)
     private void createGmf$skipNetworkSplash(LocalPlayer player, CallbackInfo ci) {
-        if (CreateParticleOptimizer.shouldSuppressFluidEffects()) {
+        if (CreateParticleOptimizer.suppressDirectFluidEffect()) {
             ci.cancel();
         }
     }
