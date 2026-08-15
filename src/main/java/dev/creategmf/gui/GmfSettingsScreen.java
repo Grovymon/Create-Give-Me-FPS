@@ -62,6 +62,8 @@ public final class GmfSettingsScreen extends GmfScreen {
     private int drawnContentBottom;
     private boolean drawingScrollableContent;
     private boolean draggingAnimationDistance;
+    private boolean updatingAnimationDistanceFromSlider;
+    private boolean animationDistanceChangedDuringDrag;
     private int animationSliderLeft;
     private int animationSliderRight;
     private int animationSliderTop;
@@ -748,16 +750,28 @@ public final class GmfSettingsScreen extends GmfScreen {
 
     private void setAnimationDistance(int value) {
         int clamped = Math.clamp(value, 0, MAX_ANIMATION_DISTANCE);
+        int previous = GmfConfig.CLIENT.distantAnimationDistance.get().intValue();
         GmfConfig.CLIENT.distantAnimationDistance.set((double) clamped);
-        if (animationDistanceInput != null && !animationDistanceInput.isFocused()) {
-            // EditBox#setValue notifies its responder.  Suppress that callback
-            // while a slider drag synchronizes the visible numeric field.
+        if (animationDistanceInput != null) {
+            // Keep the value box in sync even when it still has keyboard focus:
+            // the slider and direct numeric input must always show one value.
+            // EditBox#setValue notifies its responder, so suppress that callback.
             syncingAnimationDistanceInput = true;
             try {
                 animationDistanceInput.setValue(Integer.toString(clamped));
             } finally {
                 syncingAnimationDistanceInput = false;
             }
+        }
+        if (previous == clamped) return;
+
+        // Dragging may generate many mouse events per frame.  Apply the visible
+        // change immediately, but save and rebuild kinetic render state once on
+        // mouse release instead of repeatedly while the knob moves.
+        if (updatingAnimationDistanceFromSlider) {
+            animationDistanceChangedDuringDrag = true;
+            GmfConfig.CLIENT.pcProfile.set(PcProfile.CUSTOM);
+            return;
         }
         customAndRefresh();
     }
@@ -771,7 +785,12 @@ public final class GmfSettingsScreen extends GmfScreen {
         if (animationSliderSetter == null) return;
         double fraction = Math.clamp((mouseX - animationSliderLeft)
                 / (double) Math.max(1, animationSliderRight - animationSliderLeft), 0.0D, 1.0D);
-        animationSliderSetter.accept((int) Math.round(fraction * MAX_ANIMATION_DISTANCE));
+        updatingAnimationDistanceFromSlider = true;
+        try {
+            animationSliderSetter.accept((int) Math.round(fraction * MAX_ANIMATION_DISTANCE));
+        } finally {
+            updatingAnimationDistanceFromSlider = false;
+        }
     }
 
     private void playClickSound() {
@@ -792,6 +811,7 @@ public final class GmfSettingsScreen extends GmfScreen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && isOverAnimationSlider(mouseX, mouseY)) {
             draggingAnimationDistance = true;
+            animationDistanceChangedDuringDrag = false;
             updateAnimationSlider(mouseX);
             playClickSound();
             return true;
@@ -825,6 +845,10 @@ public final class GmfSettingsScreen extends GmfScreen {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (button == 0 && draggingAnimationDistance) {
             draggingAnimationDistance = false;
+            if (animationDistanceChangedDuringDrag) {
+                animationDistanceChangedDuringDrag = false;
+                customAndRefresh();
+            }
             return true;
         }
         return super.mouseReleased(mouseX, mouseY, button);
