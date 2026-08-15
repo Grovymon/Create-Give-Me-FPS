@@ -3,7 +3,7 @@ package dev.creategmf.client;
 import java.util.function.Supplier;
 
 import dev.creategmf.CreateGmf;
-import dev.creategmf.gui.GmfMainScreen;
+import dev.creategmf.gui.GmfSettingsScreen;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -21,7 +21,7 @@ public final class CreateGmfClient {
         NeoForge.EVENT_BUS.addListener(ClientRuntime::onRenderFrame);
 
         Supplier<IConfigScreenFactory> screenFactory = () ->
-                (minecraft, parent) -> new GmfMainScreen(parent);
+                (minecraft, parent) -> new GmfSettingsScreen(parent);
         container.registerExtensionPoint(IConfigScreenFactory.class, screenFactory);
     }
 }

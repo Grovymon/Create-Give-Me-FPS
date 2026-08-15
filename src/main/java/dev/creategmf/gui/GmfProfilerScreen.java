@@ -1,8 +1,11 @@
 package dev.creategmf.gui;
 
+import java.util.List;
 import java.util.Locale;
 
 import dev.creategmf.diagnostics.CreateSceneScanner;
+import dev.creategmf.diagnostics.MechanismLoad;
+import dev.creategmf.diagnostics.BlockEntityLoad;
 import dev.creategmf.diagnostics.SceneCensus;
 import dev.creategmf.optimization.belts.BeltShadowCounters;
 import dev.creategmf.optimization.belts.BeltShadowOptimizer;
@@ -28,7 +31,7 @@ public final class GmfProfilerScreen extends GmfScreen {
         scene = CreateSceneScanner.captureNearby();
         addRenderableWidget(Button.builder(Component.translatable("gui.create_gmf.refresh"), button ->
                         scene = CreateSceneScanner.captureNearby())
-                .bounds(width / 2 - 100, 184, 200, 20).build());
+                .bounds(width / 2 - 100, 220, 200, 20).build());
         addBackButton();
     }
 
@@ -54,8 +57,25 @@ public final class GmfProfilerScreen extends GmfScreen {
                 scene.contraptions()), x, y + 76, 0xFFB8C1CC);
         graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.shadow_counters",
                 counters.attempted(), counters.rendered(), counters.skipped()), x, y + 96, 0xFFE4BB67);
+        List<MechanismLoad> heaviest = scene.topMechanisms(3);
+        graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.heavy_mechanisms_estimated"),
+                x, y + 116, 0xFFE4BB67);
+        for (int index = 0; index < heaviest.size(); index++) {
+            MechanismLoad load = heaviest.get(index);
+            graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.mechanism_load_entry",
+                    Component.translatable(load.group().translationKey()), load.objects()), x, y + 130 + index * 12,
+                    0xFFB8C1CC);
+        }
+        List<BlockEntityLoad> specific = scene.topBlockEntityTypes(3);
+        graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.specific_mechanisms_estimated"),
+                x, y + 174, 0xFFE4BB67);
+        for (int index = 0; index < specific.size(); index++) {
+            BlockEntityLoad load = specific.get(index);
+            graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.block_entity_load_entry",
+                    Component.literal(load.typeName()), load.objects()), x, y + 188 + index * 12, 0xFFB8C1CC);
+        }
         graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.counts_not_time"),
-                x, y + 116, 0xFF9EA8B5);
+                x, y + 228, 0xFF9EA8B5);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 

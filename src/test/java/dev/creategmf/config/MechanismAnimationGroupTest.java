@@ -23,10 +23,16 @@ class MechanismAnimationGroupTest {
         assertEquals(MechanismAnimationGroup.PUMPS_AND_PIPES, group("fluids.pipes.GlassPipeVisual"));
         assertEquals(MechanismAnimationGroup.SHAFTS_AND_COGS,
                 group("kinetics.simpleRelays.BracketedKineticBlockEntityVisual"));
-        assertEquals(MechanismAnimationGroup.OTHER,
+        assertEquals(MechanismAnimationGroup.BLAZE_BURNERS,
                 group("processing.burner.BlazeBurnerVisual"));
-        assertEquals(MechanismAnimationGroup.OTHER,
+        assertEquals(MechanismAnimationGroup.TRAINS_AND_RAILS,
                 group("trains.display.FlapDisplaySection"));
+        assertEquals(MechanismAnimationGroup.TUNNELS_AND_FUNNELS,
+                group("logistics.tunnel.BeltTunnelVisual"));
+        assertEquals(MechanismAnimationGroup.EJECTORS,
+                group("logistics.depot.EjectorVisual"));
+        assertEquals(MechanismAnimationGroup.PACKAGE_PORTS,
+                group("logistics.packagePort.frogport.FrogportVisual"));
     }
 
     @Test

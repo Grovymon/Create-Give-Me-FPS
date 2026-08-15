@@ -15,11 +15,34 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 sourceSets.main.resources {
     srcDir('src/generated/resources')
+    srcDir(layout.buildDirectory.dir('generated/resources'))
+}
+
+def gmfGitCommit = providers.exec {
+    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+    ignoreExitValue = true
+}.standardOutput.asText.map { output ->
+    def commit = output.trim()
+    commit.isEmpty() ? 'unknown' : commit
+}
+
+tasks.register('generateGmfBuildInfo') {
+    inputs.property('gitCommit', gmfGitCommit)
+    outputs.file(layout.buildDirectory.file('generated/resources/gmf_build.properties'))
+    doLast {
+        def output = layout.buildDirectory.file('generated/resources/gmf_build.properties').get().asFile
+        output.parentFile.mkdirs()
+        output.text = "git_commit=${gmfGitCommit.get()}\n"
+    }
 }
 
 repositories {
     maven { url = 'https://maven.createmod.net' }
     maven { url = 'https://maven.ithundxr.dev/snapshots' }
+    maven {
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
 }
 
 runs {
@@ -56,9 +79,14 @@ dependencies {
         transitive = false
     }
     implementation "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
-    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}"
+    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
     runtimeOnly "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
     implementation "com.tterrag.registrate:Registrate:${registrate_version}"
+    // Needed only to compile the optional CreateBetterFPS-derived render path.
+    // The mixins are not applied unless both client mods are present at launch.
+    compileOnly "maven.modrinth:sodium:mc${minecraft_version}-0.8.12-neoforge"
+    compileOnly "maven.modrinth:iris:1.8.14-beta.1+${minecraft_version}-neoforge"
+    compileOnly files("${project.projectDir}/libs/sodium-api-0.8.12-neoforge.jar")
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -66,6 +94,7 @@ dependencies {
 }
 
 tasks.withType(ProcessResources).configureEach {
+    dependsOn('generateGmfBuildInfo')
     def replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
@@ -102,6 +131,34 @@ jar {
                 'Implementation-Title'  : project.name,
                 'Implementation-Version': archiveVersion
         ])
+    }
+}
+
+tasks.named('compileJava').configure {
+    dependsOn('extractSodiumApi')
+}
+
+tasks.register('extractSodiumApi', Copy) {
+    from zipTree(configurations.detachedConfiguration(
+            dependencies.create("maven.modrinth:sodium:mc${minecraft_version}-0.8.12-neoforge"))
+            .singleFile)
+    include 'META-INF/jarjar/net.caffeinemc.sodium-neoforge-0.8.12+mc1.21.1-mod.jar'
+    eachFile { details ->
+        details.path = 'sodium-api-0.8.12-neoforge.jar'
+    }
+    includeEmptyDirs = false
+    into layout.projectDirectory.dir('libs')
+}
+
+tasks.named('jar', Jar).configure {
+    from('LICENSE') {
+        into 'META-INF'
+    }
+    from('THIRD_PARTY_NOTICES.md') {
+        into 'META-INF'
+    }
+    from('THIRD_PARTY_LICENSES') {
+        into 'META-INF/third_party'
     }
 }
 

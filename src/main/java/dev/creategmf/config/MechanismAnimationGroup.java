@@ -20,6 +20,11 @@ public enum MechanismAnimationGroup {
     BEARINGS_AND_CONTRAPTIONS("bearingsAndContraptions", "config.create_gmf.mechanism.bearings_and_contraptions"),
     PUMPS_AND_PIPES("pumpsAndPipes", "config.create_gmf.mechanism.pumps_and_pipes"),
     CHAINS_AND_CONVEYORS("chainsAndConveyors", "config.create_gmf.mechanism.chains_and_conveyors"),
+    TUNNELS_AND_FUNNELS("tunnelsAndFunnels", "config.create_gmf.mechanism.tunnels_and_funnels"),
+    EJECTORS("ejectors", "config.create_gmf.mechanism.ejectors"),
+    PACKAGE_PORTS("packagePorts", "config.create_gmf.mechanism.package_ports"),
+    BLAZE_BURNERS("blazeBurners", "config.create_gmf.mechanism.blaze_burners"),
+    TRAINS_AND_RAILS("trainsAndRails", "config.create_gmf.mechanism.trains_and_rails"),
     OTHER("other", "config.create_gmf.mechanism.other");
 
     private final String configKey;
@@ -66,6 +71,14 @@ public enum MechanismAnimationGroup {
         if (className.contains(".contraptions.bearing.") || className.contains(".contraptions.render.")) {
             return BEARINGS_AND_CONTRAPTIONS;
         }
+        if (className.contains(".logistics.factoryBoard.") || className.contains(".logistics.tunnel.") || className.contains(".logistics.funnel.")
+                || className.contains(".logistics.chute.")) return TUNNELS_AND_FUNNELS;
+        if (className.contains(".logistics.depot.")) return EJECTORS;
+        if (className.contains(".logistics.packagePort.") || className.contains(".logistics.packager.")) {
+            return PACKAGE_PORTS;
+        }
+        if (className.contains(".processing.burner.")) return BLAZE_BURNERS;
+        if (className.contains(".trains.") || className.contains(".redstone.rail.")) return TRAINS_AND_RAILS;
         if (className.contains(".fluids.")) return PUMPS_AND_PIPES;
         if (className.contains(".kinetics.chain")) return CHAINS_AND_CONVEYORS;
         if (className.contains(".kinetics.simpleRelays.") || className.contains(".kinetics.transmission.")

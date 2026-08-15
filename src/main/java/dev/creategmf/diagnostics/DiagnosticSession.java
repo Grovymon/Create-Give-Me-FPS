@@ -110,6 +110,10 @@ public final class DiagnosticSession {
             return new Classification(BottleneckType.CONTRAPTIONS, EvidenceStatus.ESTIMATED, Confidence.MEDIUM,
                     "diagnostic.create_gmf.reason.many_contraptions");
         }
+        if (!scene.topMechanisms(1).isEmpty() && scene.topMechanisms(1).getFirst().estimatedWeight() >= 12) {
+            return new Classification(BottleneckType.CREATE_RENDERING, EvidenceStatus.ESTIMATED, Confidence.MEDIUM,
+                    "diagnostic.create_gmf.reason.mechanism_load");
+        }
         if (scene.createBlockEntities() >= 100) {
             return new Classification(BottleneckType.CREATE_RENDERING, EvidenceStatus.ESTIMATED, Confidence.LOW,
                     "diagnostic.create_gmf.reason.dense_create_scene");

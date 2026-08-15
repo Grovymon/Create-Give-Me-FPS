@@ -13,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(value = HarvesterRenderer.class, remap = false)
 public abstract class HarvesterRendererMixin {
     @ModifyExpressionValue(method = "transform", at = @At(value = "INVOKE",
-            target = "Lnet/createmod/catnip/animation/AnimationTickHolder;getRenderTime(Lnet/minecraft/world/level/Level;)F"),
-            require = 0)
+            target = "Lnet/createmod/catnip/animation/AnimationTickHolder;getRenderTime(Lnet/minecraft/world/level/LevelAccessor;)F"),
+            require = 1)
     private static float createGmf$sampleBladeTime(float original) {
         return DistantAnimationController.sampledRenderTime(original, null, MechanismAnimationGroup.HARVESTERS);
     }

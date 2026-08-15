@@ -3,6 +3,7 @@ package dev.creategmf.optimization.animations;
 import dev.creategmf.config.DistantAnimationMode;
 import dev.creategmf.config.GmfConfig;
 import dev.creategmf.config.MechanismAnimationGroup;
+import dev.creategmf.diagnostics.GmfRuntimeStatus;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -33,6 +34,7 @@ public final class DistantAnimationController {
     }
 
     public static boolean shouldUpdate(Object visual, Camera camera) {
+        GmfRuntimeStatus.markAnimationHook();
         if (!GmfConfig.CLIENT.enabled.get() || !(visual instanceof BlockEntityVisualAccess access)
                 || !visual.getClass().getName().startsWith("com.simibubi.create.")) {
             return true;
@@ -73,6 +75,12 @@ public final class DistantAnimationController {
         if (limit <= 0) {
             return false;
         }
+        // This is a client visual update divider only.  Create's kinetic
+        // network, stress calculation and machine processing stay untouched.
+        if (Math.floorMod(tickIndex + access.createGmf$getWorldPosition().asLong(),
+                GmfConfig.CLIENT.animationUpdateTickDivisor.get()) != 0) {
+            return false;
+        }
         DistantAnimationMode mode = GmfConfig.CLIENT.distantAnimationMode.get();
         if (mode == DistantAnimationMode.FULL) {
             return true;
@@ -100,6 +108,10 @@ public final class DistantAnimationController {
     public static AnimationPolicy animationPolicy(BlockPos pos, String ownerClassName, Camera camera) {
         return animationPolicy(pos == null ? null : Vec3.atCenterOf(pos),
                 MechanismAnimationGroup.fromClassName(ownerClassName), camera);
+    }
+
+    public static AnimationPolicy animationPolicy(BlockPos pos, MechanismAnimationGroup group, Camera camera) {
+        return animationPolicy(pos == null ? null : Vec3.atCenterOf(pos), group, camera);
     }
 
     public static AnimationPolicy animationPolicy(Vec3 position, MechanismAnimationGroup group, Camera camera) {
@@ -204,7 +216,12 @@ public final class DistantAnimationController {
     }
 
     public static boolean animationsGloballyDisabled() {
-        return GmfConfig.CLIENT.enabled.get() && GmfConfig.CLIENT.distantAnimationDistance.get() <= 0;
+        // Sprite tickers can run while resources are loading, before the
+        // NeoForge config has been attached.  Treat that short period as normal
+        // rendering instead of reading an unavailable ConfigValue.
+        return GmfConfig.SPEC.isLoaded()
+                && GmfConfig.CLIENT.enabled.get()
+                && GmfConfig.CLIENT.distantAnimationDistance.get() <= 0;
     }
 
     public static boolean shouldSuppressUnpositioned(MechanismAnimationGroup group) {
