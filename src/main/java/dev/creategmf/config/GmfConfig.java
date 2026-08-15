@@ -61,9 +61,9 @@ public final class GmfConfig {
             case POTATO -> applyRenderingValues(45, 0, 5, 0, CreateParticleMode.OFF, DistantAnimationMode.STATIC);
             case LOW -> applyRenderingValues(60, 16, 5, 0, CreateParticleMode.OFF, DistantAnimationMode.STATIC);
             case MEDIUM -> applyRenderingValues(75, 32, 10, 16, CreateParticleMode.REDUCED, DistantAnimationMode.REDUCED);
-            case ABOVE_AVERAGE -> applyRenderingValues(90, 48, 15, 24, CreateParticleMode.REDUCED, DistantAnimationMode.REDUCED);
-            case HIGH -> applyRenderingValues(120, 64, 20, 48, CreateParticleMode.FULL, DistantAnimationMode.REDUCED);
-            case ULTRA -> applyRenderingValues(144, 256, 30, 128, CreateParticleMode.FULL, DistantAnimationMode.FULL);
+            case ABOVE_AVERAGE -> applyRenderingValues(90, 32, 15, 24, CreateParticleMode.REDUCED, DistantAnimationMode.REDUCED);
+            case HIGH -> applyRenderingValues(120, 32, 20, 48, CreateParticleMode.FULL, DistantAnimationMode.REDUCED);
+            case ULTRA -> applyRenderingValues(144, 32, 30, 128, CreateParticleMode.FULL, DistantAnimationMode.FULL);
             case CUSTOM -> throw new IllegalStateException("Handled above");
         }
     }
@@ -155,7 +155,7 @@ public final class GmfConfig {
             renderItemBreakParticles = builder.define("renderItemAndBlockBreakParticles", true);
             renderWaterSplashParticles = builder.define("renderWaterAndLavaSplashParticles", true);
             distantAnimationMode = builder.defineEnum("distantAnimationMode", DistantAnimationMode.REDUCED);
-            distantAnimationDistance = builder.defineInRange("distantAnimationDistance", 48.0, 0.0, 256.0);
+            distantAnimationDistance = builder.defineInRange("distantAnimationDistance", 32.0, 0.0, 32.0);
             reducedAnimationFps = builder.defineInRange("reducedAnimationFps", 10, 1, 30);
             animationUpdateTickDivisor = builder.comment(
                     "Updates client-side Create visuals every Nth tick. Does not affect machine simulation.")

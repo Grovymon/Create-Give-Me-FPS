@@ -32,7 +32,11 @@ import net.minecraft.sounds.SoundEvents;
  * of a grid of vanilla buttons.  Every control still writes the normal GMF config.
  */
 public final class GmfSettingsScreen extends GmfScreen {
-    private static final int MAX_ANIMATION_DISTANCE = 256;
+    // A full 0–256 slider is too sensitive in a normal-sized Minecraft GUI:
+    // moving the mouse by one pixel can change several blocks.  Full detail
+    // beyond two chunks is also deliberately not part of this optimisation
+    // control, so make the useful range precise and predictable.
+    private static final int MAX_ANIMATION_DISTANCE = 32;
     private static final int[] REDUCED_ANIMATION_FPS = {1, 2, 5, 10, 15, 20, 30};
     private static final int[] ANIMATION_UPDATE_TICKS = {1, 2, 3, 4, 5};
     private static final PcProfile[] PRESETS = {
@@ -91,8 +95,8 @@ public final class GmfSettingsScreen extends GmfScreen {
         if (page == Page.MECHANISMS && !individualMechanismsOpen) {
             animationDistanceInput = new EditBox(font, 0, 0, 1, 18,
                     Component.translatable("config.create_gmf.animation_distance_slider"));
-            animationDistanceInput.setMaxLength(3);
-            animationDistanceInput.setFilter(value -> value.isEmpty() || value.matches("\\d{1,3}"));
+            animationDistanceInput.setMaxLength(2);
+            animationDistanceInput.setFilter(value -> value.isEmpty() || value.matches("\\d{1,2}"));
             animationDistanceInput.setBordered(false);
             animationDistanceInput.setTextColor(0xFFE0DDD6);
             animationDistanceInput.setValue(Integer.toString(GmfConfig.CLIENT.distantAnimationDistance.get().intValue()));
@@ -539,23 +543,29 @@ public final class GmfSettingsScreen extends GmfScreen {
 
     private int sliderRow(GuiGraphics graphics, int x, int y, int width, Component label, int value, int min, int max,
             java.util.function.IntConsumer setter, Component tooltip, int mouseX, int mouseY) {
-        // A 0–256 range needs more than the old ~80 px track; otherwise one
-        // mouse pixel skips several values.  Put the controls on their own line
-        // so the track spans almost the whole card and can select every value.
+        // Full animations are intentionally limited to 0–32 blocks.  The
+        // separate control row leaves enough horizontal precision for each
+        // individual block value and makes the range readable at a glance.
         int labelBottom = drawWrappedRowLabel(graphics, x, y, width - 20, label);
         int controlsY = labelBottom + 5;
         int inputX = x + width - 44;
         int barLeft = x + 12;
         int barRight = inputX - 12;
         graphics.fill(barLeft, controlsY + 7, barRight, controlsY + 9, 0xFF594832);
+        // Reference marks every four blocks (0, 4, …, 32) make it clear that
+        // this is a short, precise slider instead of a continuous 256 range.
+        for (int tick = min; tick <= max; tick += 4) {
+            int tickX = barLeft + (int) Math.round((barRight - barLeft) * (tick - min) / (double) (max - min));
+            graphics.fill(tickX, controlsY + 5, tickX + 1, controlsY + 11, 0xFF8D7043);
+        }
         int knob = barLeft + (int) ((barRight - barLeft) * (value - min) / (double) (max - min));
         graphics.fill(knob - 3, controlsY + 3, knob + 4, controlsY + 13, 0xFFE4BB67);
         if (animationDistanceInput != null) {
             // The EditBox renders the editable number itself.  Drawing a normal
             // value here as well produced two overlapping copies while dragging.
-            drawValueBackground(graphics, inputX, y - 3, 38, mouseX, mouseY);
+            drawValueBackground(graphics, inputX, controlsY - 3, 38, mouseX, mouseY);
         } else {
-            drawValue(graphics, inputX, y - 3, 38, Component.literal(Integer.toString(value)), mouseX, mouseY);
+            drawValue(graphics, inputX, controlsY - 3, 38, Component.literal(Integer.toString(value)), mouseX, mouseY);
         }
         animationSliderLeft = barLeft;
         animationSliderRight = barRight;

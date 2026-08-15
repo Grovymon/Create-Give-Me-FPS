@@ -77,7 +77,7 @@
   "config.create_gmf.animation_distance_slider": "Дальность полных анимаций",
   "config.create_gmf.reduced_animation_fps": "Частота анимаций",
   "config.create_gmf.animation_update_ticks": "Обновлять анимации каждые",
-  "tooltip.create_gmf.animation_distance": "Радиус полной плавной анимации Create в блоках. Перетащите ползунок или введите число от 0 до 256. При 0 полные анимации отключены.",
+  "tooltip.create_gmf.animation_distance": "Радиус полной плавной анимации Create в блоках. Перетащите ползунок или введите число от 0 до 32. Деления отмечены через 4 блока. При 0 полные анимации отключены.",
   "tooltip.create_gmf.distant_animation_mode": "Что показывать за пределами полной дальности. ЛКМ — следующее значение, ПКМ — предыдущее.",
   "tooltip.create_gmf.reduced_animation_fps": "Частота упрощённых анимаций вдали. Меньше FPS снижает нагрузку, но делает движение менее плавным. ЛКМ — вперёд, ПКМ — назад.",
   "tooltip.create_gmf.animation_update_ticks": "Как часто обновлять визуальные анимации. Это не меняет скорость и работу механизмов. ЛКМ — вперёд, ПКМ — назад.",

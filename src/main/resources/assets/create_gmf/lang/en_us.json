@@ -77,7 +77,7 @@
   "config.create_gmf.animation_distance_slider": "Full Animation Distance",
   "config.create_gmf.reduced_animation_fps": "Animation Rate",
   "config.create_gmf.animation_update_ticks": "Update Animations Every",
-  "tooltip.create_gmf.animation_distance": "Full smooth Create animation radius in blocks. Drag the slider or type a number from 0 to 256. At 0, full animations are disabled.",
+  "tooltip.create_gmf.animation_distance": "Full smooth Create animation radius in blocks. Drag the slider or type a number from 0 to 32. Marks are shown every 4 blocks. At 0, full animations are disabled.",
   "tooltip.create_gmf.distant_animation_mode": "What to show beyond the full-animation radius. Left-click for next, right-click for previous.",
   "tooltip.create_gmf.reduced_animation_fps": "Frame rate for simplified distant animations. Lower FPS reduces load but makes movement less smooth. Left-click for next, right-click for previous.",
   "tooltip.create_gmf.animation_update_ticks": "How often visual animations update. It does not change machine speed or logic. Left-click for next, right-click for previous.",
