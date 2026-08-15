@@ -539,13 +539,17 @@ public final class GmfSettingsScreen extends GmfScreen {
 
     private int sliderRow(GuiGraphics graphics, int x, int y, int width, Component label, int value, int min, int max,
             java.util.function.IntConsumer setter, Component tooltip, int mouseX, int mouseY) {
-        int labelBottom = drawWrappedRowLabel(graphics, x, y, width - 145, label);
-        int barLeft = x + width - 132;
-        int barRight = x + width - 50;
-        graphics.fill(barLeft, y + 7, barRight, y + 9, 0xFF594832);
-        int knob = barLeft + (int) ((barRight - barLeft) * (value - min) / (double) (max - min));
-        graphics.fill(knob - 3, y + 3, knob + 4, y + 13, 0xFFE4BB67);
+        // A 0–256 range needs more than the old ~80 px track; otherwise one
+        // mouse pixel skips several values.  Put the controls on their own line
+        // so the track spans almost the whole card and can select every value.
+        int labelBottom = drawWrappedRowLabel(graphics, x, y, width - 20, label);
+        int controlsY = labelBottom + 5;
         int inputX = x + width - 44;
+        int barLeft = x + 12;
+        int barRight = inputX - 12;
+        graphics.fill(barLeft, controlsY + 7, barRight, controlsY + 9, 0xFF594832);
+        int knob = barLeft + (int) ((barRight - barLeft) * (value - min) / (double) (max - min));
+        graphics.fill(knob - 3, controlsY + 3, knob + 4, controlsY + 13, 0xFFE4BB67);
         if (animationDistanceInput != null) {
             // The EditBox renders the editable number itself.  Drawing a normal
             // value here as well produced two overlapping copies while dragging.
@@ -555,7 +559,7 @@ public final class GmfSettingsScreen extends GmfScreen {
         }
         animationSliderLeft = barLeft;
         animationSliderRight = barRight;
-        animationSliderTop = y - scrollOffset - 3;
+        animationSliderTop = controlsY - scrollOffset - 3;
         animationSliderBottom = animationSliderTop + 22;
         animationSliderSetter = setter;
         if (animationDistanceInput != null) {
@@ -569,18 +573,18 @@ public final class GmfSettingsScreen extends GmfScreen {
             // The surrounding value box is 20 px tall and the Minecraft font
             // is 9 px tall.  Put the text baseline in the visual centre rather
             // than at the top edge of the borderless EditBox.
-            animationDistanceInput.setY(y - scrollOffset + 2);
+            animationDistanceInput.setY(controlsY - scrollOffset + 2);
             animationDistanceInput.setWidth(inputWidth);
             animationDistanceInput.setHeight(16);
             animationDistanceInput.visible = animationDistanceInput.getY() >= 78
                     && animationDistanceInput.getY() + animationDistanceInput.getHeight() <= contentViewportBottom();
             // Keep the complete visual value field clickable, even though the
             // edit control is intentionally only as wide as its centred text.
-            addHitArea(inputX, y - 3, 38, 20, this::focusAnimationDistanceInput);
+            addHitArea(inputX, controlsY - 3, 38, 20, this::focusAnimationDistanceInput);
         }
         // Keep the hint on the label instead of the slider or number field.
-        addTooltipArea(x, y, width - 145, Math.max(22, labelBottom - y + 5), tooltip);
-        return Math.max(y + 29, labelBottom + 10);
+        addTooltipArea(x, y, width - 20, Math.max(22, labelBottom - y + 5), tooltip);
+        return controlsY + 28;
     }
 
     private void focusAnimationDistanceInput() {
