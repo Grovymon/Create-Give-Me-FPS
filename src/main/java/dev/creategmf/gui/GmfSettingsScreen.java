@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.Locale;
 
 import dev.creategmf.config.CreateParticleMode;
+import dev.creategmf.config.DeveloperLogLevel;
 import dev.creategmf.config.DistantAnimationMode;
 import dev.creategmf.config.FlywheelBackendMode;
 import dev.creategmf.config.GmfConfig;
 import dev.creategmf.config.MechanismAnimationGroup;
 import dev.creategmf.config.PcProfile;
 import dev.creategmf.client.RendererRestartTracker;
+import dev.creategmf.diagnostics.DeveloperDiagnostics;
 import dev.creategmf.integration.FlywheelBackendController;
 import dev.creategmf.integration.ModCompatibilityDetector;
 import dev.creategmf.integration.ShaderStatusDetector;
@@ -421,10 +423,56 @@ public final class GmfSettingsScreen extends GmfScreen {
         int y = beginCard(graphics, contentLeft, 78, w, Component.translatable("gui.create_gmf.card.other"));
         y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.enable"),
                 GmfConfig.CLIENT.enabled.get(), () -> {
-                    GmfConfig.CLIENT.enabled.set(!GmfConfig.CLIENT.enabled.get());
-                    customAndRefresh();
-                }, mouseX, mouseY);
+                GmfConfig.CLIENT.enabled.set(!GmfConfig.CLIENT.enabled.get());
+                customAndRefresh();
+            }, mouseX, mouseY);
         endCard(graphics, contentLeft, 78, w, y);
+
+        int developerTop = y + 18;
+        y = beginCard(graphics, contentLeft, developerTop, w, Component.translatable("gui.create_gmf.developer.title"));
+        y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.developer_mode"),
+                GmfConfig.CLIENT.developerMode.get(), () -> {
+                    GmfConfig.CLIENT.developerMode.set(!GmfConfig.CLIENT.developerMode.get());
+                    GmfConfig.save();
+                }, mouseX, mouseY);
+        if (GmfConfig.CLIENT.developerMode.get()) {
+            y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.developer_logging"),
+                    GmfConfig.CLIENT.developerLogging.get(), () -> {
+                        GmfConfig.CLIENT.developerLogging.set(!GmfConfig.CLIENT.developerLogging.get());
+                        GmfConfig.save();
+                    }, mouseX, mouseY);
+            y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.developer_auto_spikes"),
+                    GmfConfig.CLIENT.automaticSpikeDetection.get(), () -> {
+                        GmfConfig.CLIENT.automaticSpikeDetection.set(!GmfConfig.CLIENT.automaticSpikeDetection.get());
+                        GmfConfig.save();
+                    }, mouseX, mouseY);
+            y = cycleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.developer_level"),
+                    Component.translatable(DeveloperLogLevel.NORMAL.translationKey()), () -> { }, () -> { },
+                    Component.translatable("tooltip.create_gmf.developer_level"), mouseX, mouseY);
+            y = drawWrappedText(graphics, Component.translatable("gui.create_gmf.developer.log_folder",
+                    DeveloperDiagnostics.INSTANCE.logPath()), contentLeft + 12, y + 3, w - 24, 0xFFA9A196) + 8;
+            int actionWidth = Math.max(120, (w - 36) / 2);
+            drawAction(graphics, contentLeft + 12, y, actionWidth, Component.translatable("gui.create_gmf.developer.open_folder"),
+                    false, mouseX, mouseY);
+            addHitArea(contentLeft + 12, y, actionWidth, 28, DeveloperDiagnostics.INSTANCE::openLogFolder);
+            drawAction(graphics, contentLeft + 24 + actionWidth, y, actionWidth,
+                    Component.translatable("gui.create_gmf.developer.copy_path"), false, mouseX, mouseY);
+            addHitArea(contentLeft + 24 + actionWidth, y, actionWidth, 28, DeveloperDiagnostics.INSTANCE::copyLogPath);
+            y += 38;
+            drawAction(graphics, contentLeft + 12, y, actionWidth,
+                    Component.translatable("gui.create_gmf.developer.mark_problem"), false, mouseX, mouseY);
+            addHitArea(contentLeft + 12, y, actionWidth, 28, DeveloperDiagnostics.INSTANCE::requestMarker);
+            drawAction(graphics, contentLeft + 24 + actionWidth, y, actionWidth,
+                    Component.translatable("gui.create_gmf.developer.save_report"), false, mouseX, mouseY);
+            addHitArea(contentLeft + 24 + actionWidth, y, actionWidth, 28, DeveloperDiagnostics.INSTANCE::requestManualCapture);
+            y = drawWrappedText(graphics, Component.translatable("gui.create_gmf.developer.last_event",
+                    DeveloperDiagnostics.INSTANCE.lastEventText()), contentLeft + 12, y + 40, w - 24, 0xFFE4BB67);
+            if (!DeveloperDiagnostics.INSTANCE.lastActionText().isBlank()) {
+                y = drawWrappedText(graphics, Component.literal(DeveloperDiagnostics.INSTANCE.lastActionText()),
+                        contentLeft + 12, y + 4, w - 24, 0xFFA9A196);
+            }
+        }
+        endCard(graphics, contentLeft, developerTop, w, y + 8);
     }
 
     private void drawFeedback(GuiGraphics graphics, int mouseX, int mouseY) {

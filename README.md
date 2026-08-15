@@ -6,10 +6,11 @@
   <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
 
-**Current release: 0.1.10**
+**Current release: 0.1.11**
 
-> **New in 0.1.10:** fixed duplicated digits in the editable animation-distance
-> field and made long setting hints wrap across multiple lines.
+> **New in 0.1.11:** added the optional Developer Mode black box. It keeps a
+> bounded in-memory frame history and writes a local report only after a manual
+> marker/capture or a detected hitch.
 
 0.1.8 added a 0–256 animation-distance field, right-click backwards cycling,
 Minecraft UI click sounds, and hover hints for animation, particle, and
@@ -35,6 +36,8 @@ simulation.
 - belt item-shadow distance controls;
 - in-world lag diagnostics and before/after measurements;
 - shader detection through the Iris public API;
+- optional Developer Mode: manual markers, automatic frame-spike capture,
+  nearby-scene census and local reports in `logs/GMF/`;
 - complete English and Russian interface localization.
 - optional **Accelerated Rendering** switch in the Flywheel page. It uses the
   CreateBetterFPS-derived path only when both Sodium and Iris are present;
@@ -47,7 +50,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
-| Create: Give Me FPS | 0.1.10 |
+| Create: Give Me FPS | 0.1.11 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -74,7 +77,7 @@ On Linux or macOS:
 The resulting JAR is written to `build/libs/`.
 
 The downloadable release is named
-`Create-Give-Me-FPS-0.1.10-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.11-NeoForge-1.21.1.jar`.
 
 ## Important limitations
 

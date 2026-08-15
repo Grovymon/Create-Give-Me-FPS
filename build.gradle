@@ -15,6 +15,25 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 sourceSets.main.resources {
     srcDir('src/generated/resources')
+    srcDir(layout.buildDirectory.dir('generated/resources'))
+}
+
+def gmfGitCommit = providers.exec {
+    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+    ignoreExitValue = true
+}.standardOutput.asText.map { output ->
+    def commit = output.trim()
+    commit.isEmpty() ? 'unknown' : commit
+}
+
+tasks.register('generateGmfBuildInfo') {
+    inputs.property('gitCommit', gmfGitCommit)
+    outputs.file(layout.buildDirectory.file('generated/resources/gmf_build.properties'))
+    doLast {
+        def output = layout.buildDirectory.file('generated/resources/gmf_build.properties').get().asFile
+        output.parentFile.mkdirs()
+        output.text = "git_commit=${gmfGitCommit.get()}\n"
+    }
 }
 
 repositories {
@@ -75,6 +94,7 @@ dependencies {
 }
 
 tasks.withType(ProcessResources).configureEach {
+    dependsOn('generateGmfBuildInfo')
     def replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,

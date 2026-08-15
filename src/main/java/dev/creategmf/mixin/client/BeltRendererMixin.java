@@ -8,6 +8,7 @@ import com.simibubi.create.content.kinetics.belt.BeltRenderer;
 import com.simibubi.create.foundation.render.ShadowRenderHelper;
 
 import dev.creategmf.optimization.belts.BeltShadowOptimizer;
+import dev.creategmf.diagnostics.GmfRuntimeStatus;
 
 import net.minecraft.client.renderer.MultiBufferSource;
 
@@ -30,6 +31,7 @@ public abstract class BeltRendererMixin {
     @Inject(method = "renderItems", at = @At("HEAD"), cancellable = true, require = 1)
     private void createGmf$skipMovingBeltItems(BeltBlockEntity belt, float partialTicks,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, CallbackInfo ci) {
+        GmfRuntimeStatus.markBeltItemHook();
         if (!dev.creategmf.config.GmfConfig.CLIENT.renderTransportedBeltItems.get()
                 || dev.creategmf.optimization.animations.DistantAnimationController.animationPolicy(belt.getBlockPos(),
                 dev.creategmf.config.MechanismAnimationGroup.BELTS,

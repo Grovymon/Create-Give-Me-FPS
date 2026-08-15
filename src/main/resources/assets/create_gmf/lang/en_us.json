@@ -290,5 +290,18 @@
   "gui.create_gmf.accelerated_renderer_hint": "CreateBetterFPS-based rendering optimization by MoePus (MIT). Requires Sodium and Iris.",
   "unit.create_gmf.mebibytes": "%s MiB",
   "unit.create_gmf.blocks": "%s blocks",
-  "unit.create_gmf.gibibytes": "%s GiB"
+  "unit.create_gmf.gibibytes": "%s GiB",
+  "gui.create_gmf.developer.title": "Developer mode",
+  "config.create_gmf.developer_mode": "Developer mode",
+  "config.create_gmf.developer_logging": "Diagnostic recording",
+  "config.create_gmf.developer_auto_spikes": "Automatically catch hitches",
+  "config.create_gmf.developer_level": "Log level",
+  "enum.create_gmf.developer_log_level.normal": "Normal",
+  "tooltip.create_gmf.developer_level": "The only mode: lightweight frame and nearby-scene recording without writing to disk every frame.",
+  "gui.create_gmf.developer.log_folder": "Log folder: %s",
+  "gui.create_gmf.developer.open_folder": "Open folder",
+  "gui.create_gmf.developer.copy_path": "Copy path",
+  "gui.create_gmf.developer.mark_problem": "Mark problem",
+  "gui.create_gmf.developer.save_report": "Save report",
+  "gui.create_gmf.developer.last_event": "Last event: %s"
 }

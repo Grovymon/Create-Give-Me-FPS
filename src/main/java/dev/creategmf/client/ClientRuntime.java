@@ -3,6 +3,7 @@ package dev.creategmf.client;
 import dev.creategmf.benchmark.OptimizationBenchmarkSession;
 import dev.creategmf.benchmark.PcBenchmarkSession;
 import dev.creategmf.diagnostics.DiagnosticSession;
+import dev.creategmf.diagnostics.DeveloperDiagnostics;
 import dev.creategmf.gui.GmfDiagnosticsScreen;
 import dev.creategmf.gui.GmfSettingsScreen;
 import dev.creategmf.gui.GmfOptimizationBenchmarkScreen;
@@ -25,6 +26,7 @@ public final class ClientRuntime {
         long frameNanos = FrameTimeCollector.INSTANCE.recordFrame(System.nanoTime());
         PcBenchmarkSession.INSTANCE.onFrame(frameNanos);
         DiagnosticSession.INSTANCE.onFrame(frameNanos);
+        DeveloperDiagnostics.INSTANCE.onFrame(frameNanos);
         OptimizationBenchmarkSession.INSTANCE.onFrame(frameNanos);
     }
 
@@ -47,6 +49,7 @@ public final class ClientRuntime {
             MemoryMetricsCollector.INSTANCE.sample();
         }
         DistantAnimationController.tick();
+        DeveloperDiagnostics.INSTANCE.onClientTick();
         PcBenchmarkSession.INSTANCE.tick();
         if (DiagnosticSession.INSTANCE.isActive() && minecraft.screen != null) {
             DiagnosticSession.INSTANCE.cancel();

@@ -290,5 +290,18 @@
   "gui.create_gmf.accelerated_renderer_hint": "Оптимизация CreateBetterFPS (MoePus, MIT). Требуются Sodium и Iris.",
   "unit.create_gmf.mebibytes": "%s МиБ",
   "unit.create_gmf.blocks": "%s блоков",
-  "unit.create_gmf.gibibytes": "%s ГиБ"
+  "unit.create_gmf.gibibytes": "%s ГиБ",
+  "gui.create_gmf.developer.title": "Режим разработчика",
+  "config.create_gmf.developer_mode": "Режим разработчика",
+  "config.create_gmf.developer_logging": "Запись диагностики",
+  "config.create_gmf.developer_auto_spikes": "Автоматически ловить подвисания",
+  "config.create_gmf.developer_level": "Уровень логирования",
+  "enum.create_gmf.developer_log_level.normal": "Обычный",
+  "tooltip.create_gmf.developer_level": "Единственный режим: лёгкая запись кадров и сцены рядом без записи на диск каждый кадр.",
+  "gui.create_gmf.developer.log_folder": "Папка логов: %s",
+  "gui.create_gmf.developer.open_folder": "Открыть папку",
+  "gui.create_gmf.developer.copy_path": "Копировать путь",
+  "gui.create_gmf.developer.mark_problem": "Отметить проблему",
+  "gui.create_gmf.developer.save_report": "Сохранить отчёт",
+  "gui.create_gmf.developer.last_event": "Последнее событие: %s"
 }

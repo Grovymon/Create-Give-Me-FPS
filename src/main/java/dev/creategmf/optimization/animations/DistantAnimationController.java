@@ -3,6 +3,7 @@ package dev.creategmf.optimization.animations;
 import dev.creategmf.config.DistantAnimationMode;
 import dev.creategmf.config.GmfConfig;
 import dev.creategmf.config.MechanismAnimationGroup;
+import dev.creategmf.diagnostics.GmfRuntimeStatus;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -33,6 +34,7 @@ public final class DistantAnimationController {
     }
 
     public static boolean shouldUpdate(Object visual, Camera camera) {
+        GmfRuntimeStatus.markAnimationHook();
         if (!GmfConfig.CLIENT.enabled.get() || !(visual instanceof BlockEntityVisualAccess access)
                 || !visual.getClass().getName().startsWith("com.simibubi.create.")) {
             return true;

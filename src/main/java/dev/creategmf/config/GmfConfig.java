@@ -5,7 +5,7 @@ import java.util.EnumMap;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class GmfConfig {
-    public static final int CURRENT_VERSION = 10;
+    public static final int CURRENT_VERSION = 11;
     public static final ClientValues CLIENT;
     public static final ModConfigSpec SPEC;
 
@@ -30,6 +30,10 @@ public final class GmfConfig {
         CLIENT.flywheelBackend.set(FlywheelBackendMode.DEFAULT);
         CLIENT.acceleratedRenderer.set(true);
         CLIENT.diagnosticDurationSeconds.set(10);
+        CLIENT.developerMode.set(false);
+        CLIENT.developerLogging.set(true);
+        CLIENT.automaticSpikeDetection.set(true);
+        CLIENT.developerLogLevel.set(DeveloperLogLevel.NORMAL);
         applyProfile(PcProfile.MEDIUM);
         save();
     }
@@ -105,6 +109,10 @@ public final class GmfConfig {
         public final ModConfigSpec.BooleanValue crushingOutputRendering;
         public final EnumMap<MechanismAnimationGroup, ModConfigSpec.BooleanValue> mechanismAnimations;
         public final ModConfigSpec.IntValue diagnosticDurationSeconds;
+        public final ModConfigSpec.BooleanValue developerMode;
+        public final ModConfigSpec.BooleanValue developerLogging;
+        public final ModConfigSpec.BooleanValue automaticSpikeDetection;
+        public final ModConfigSpec.EnumValue<DeveloperLogLevel> developerLogLevel;
 
         private ClientValues(ModConfigSpec.Builder builder) {
             configVersion = builder
@@ -121,6 +129,15 @@ public final class GmfConfig {
             builder.push("profiler");
             profilerMode = builder.defineEnum("mode", ProfilerMode.LIGHT);
             diagnosticDurationSeconds = builder.defineInRange("diagnosticDurationSeconds", 10, 5, 30);
+            builder.pop();
+
+            builder.push("developerMode");
+            developerMode = builder.comment("Creates local GMF performance black-box reports while enabled.")
+                    .define("enabled", false);
+            developerLogging = builder.define("recordDiagnostics", true);
+            automaticSpikeDetection = builder.define("automaticSpikeDetection", true);
+            developerLogLevel = builder.comment("Only NORMAL is implemented; it uses low-overhead sampling.")
+                    .defineEnum("logLevel", DeveloperLogLevel.NORMAL);
             builder.pop();
 
             builder.push("belts");
