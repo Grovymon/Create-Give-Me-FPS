@@ -13,20 +13,6 @@ Create: Give Me FPS reduces selected *client-side visual work* in large Create
 factories. It does not change recipes, inventories, stress networks, machine
 logic, or server simulation.
 
-## 0.1.2 — changes since 0.1.1
-
-- Added Developer Mode with a bounded local frame-history recorder.
-- Added **Start recording** and **Stop and save**. Starting creates a
-  timestamped session immediately; stopping always writes a final snapshot.
-- **Save report** now writes a snapshot immediately. A missing `events`
-  directory is recreated before every write, so it cannot discard a report.
-- Added nearby Create-scene census, automatic frame-spike captures, and local
-  reports in `logs/GMF/`.
-- Strengthened direct suppression of supported Create fluid effects, including
-  hose-related fluid-rendering paths.
-- Added an optional CreateBetterFPS-derived accelerated renderer toggle with
-  preserved MIT attribution.
-
 ## Controls
 
 ### Factory visuals
