@@ -455,10 +455,9 @@ public final class GmfSettingsScreen extends GmfScreen {
                     Component.translatable(recording ? "gui.create_gmf.developer.stop_logging"
                             : "gui.create_gmf.developer.start_logging"),
                     false, mouseX, mouseY);
-            addHitArea(contentLeft + 12, y, loggingButtonWidth, 28, () -> {
-                GmfConfig.CLIENT.developerLogging.set(!GmfConfig.CLIENT.developerLogging.get());
-                GmfConfig.save();
-            });
+            addHitArea(contentLeft + 12, y, loggingButtonWidth, 28,
+                    recording ? DeveloperDiagnostics.INSTANCE::stopLoggingAndSave
+                            : DeveloperDiagnostics.INSTANCE::startLogging);
             graphics.drawString(font, Component.translatable(recording ? "gui.create_gmf.developer.logging_active"
                     : "gui.create_gmf.developer.logging_inactive"), contentLeft + 20 + loggingButtonWidth, y + 10,
                     recording ? 0xFF79B96B : 0xFFA9A196);

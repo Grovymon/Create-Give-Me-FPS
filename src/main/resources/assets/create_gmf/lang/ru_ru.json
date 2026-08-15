@@ -292,8 +292,8 @@
   "unit.create_gmf.blocks": "%s блоков",
   "unit.create_gmf.gibibytes": "%s ГиБ",
   "gui.create_gmf.developer.title": "Режим разработчика",
-  "gui.create_gmf.developer.start_logging": "Запустить логирование",
-  "gui.create_gmf.developer.stop_logging": "Остановить логирование",
+  "gui.create_gmf.developer.start_logging": "Запустить запись",
+  "gui.create_gmf.developer.stop_logging": "Остановить и сохранить",
   "gui.create_gmf.developer.logging_active": "Запись включена",
   "gui.create_gmf.developer.logging_inactive": "Запись выключена",
   "config.create_gmf.developer_mode": "Режим разработчика",
@@ -315,5 +315,9 @@
   "gui.create_gmf.developer.status.folder_opened": "Папка логов открыта",
   "gui.create_gmf.developer.status.folder_failed": "Не удалось открыть или создать папку логов",
   "gui.create_gmf.developer.status.path_copied": "Путь к логам скопирован",
-  "gui.create_gmf.developer.status.path_failed": "Не удалось скопировать путь"
+  "gui.create_gmf.developer.status.path_failed": "Не удалось скопировать путь",
+  "gui.create_gmf.developer.status.logging_started": "Запись запущена: папка сессии создана",
+  "gui.create_gmf.developer.status.stopping_and_saving": "Запись остановлена: итоговый отчёт сохраняется",
+  "gui.create_gmf.developer.status.report_saved": "Отчёт сохранён в папку GMF",
+  "gui.create_gmf.developer.status.report_failed": "Не удалось сохранить отчёт: проверьте latest.log"
 }

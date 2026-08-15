@@ -292,8 +292,8 @@
   "unit.create_gmf.blocks": "%s blocks",
   "unit.create_gmf.gibibytes": "%s GiB",
   "gui.create_gmf.developer.title": "Developer mode",
-  "gui.create_gmf.developer.start_logging": "Start logging",
-  "gui.create_gmf.developer.stop_logging": "Stop logging",
+  "gui.create_gmf.developer.start_logging": "Start recording",
+  "gui.create_gmf.developer.stop_logging": "Stop and save",
   "gui.create_gmf.developer.logging_active": "Recording active",
   "gui.create_gmf.developer.logging_inactive": "Recording stopped",
   "config.create_gmf.developer_mode": "Developer mode",
@@ -315,5 +315,9 @@
   "gui.create_gmf.developer.status.folder_opened": "Log folder opened",
   "gui.create_gmf.developer.status.folder_failed": "Could not open or create the log folder",
   "gui.create_gmf.developer.status.path_copied": "Log path copied",
-  "gui.create_gmf.developer.status.path_failed": "Could not copy the log path"
+  "gui.create_gmf.developer.status.path_failed": "Could not copy the log path",
+  "gui.create_gmf.developer.status.logging_started": "Recording started: session folder created",
+  "gui.create_gmf.developer.status.stopping_and_saving": "Recording stopped: saving final report",
+  "gui.create_gmf.developer.status.report_saved": "Report saved in the GMF folder",
+  "gui.create_gmf.developer.status.report_failed": "Could not save the report: check latest.log"
 }

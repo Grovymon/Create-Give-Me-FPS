@@ -118,7 +118,8 @@ public final class DeveloperDiagnostics {
 
     public void onClientTick() {
         if (!enabled()) return;
-        ensureSession();
+        if (!GmfConfig.CLIENT.developerLogging.get()) return;
+        if (!ensureSession()) return;
         if (++ticks >= 20) {
             ticks = 0;
             latestScene = CreateSceneScanner.captureNearby();
@@ -138,6 +139,60 @@ public final class DeveloperDiagnostics {
         requestManual("MANUAL_CAPTURE");
     }
 
+    /**
+     * Starts a new on-disk diagnostic session immediately.  This deliberately
+     * creates the session files before a frame hitch happens, so the Start
+     * button itself is a visible confirmation that the selected log path is
+     * writable.
+     */
+    public void startLogging() {
+        if (!enabled()) {
+            lastActionKey = "gui.create_gmf.developer.status.disabled";
+            return;
+        }
+        GmfConfig.CLIENT.developerLogging.set(true);
+        GmfConfig.save();
+        if (ensureSession()) {
+            lastActionKey = "gui.create_gmf.developer.status.logging_started";
+        }
+    }
+
+    /**
+     * Stops recording and always queues one final snapshot.  A pending manual
+     * capture is completed early rather than discarded, so pressing Stop is a
+     * safe way to finish a report before leaving the game.
+     */
+    public void stopLoggingAndSave() {
+        if (!enabled()) {
+            lastActionKey = "gui.create_gmf.developer.status.disabled";
+            return;
+        }
+        if (!GmfConfig.CLIENT.developerLogging.get()) {
+            lastActionKey = "gui.create_gmf.developer.status.recording_disabled";
+            return;
+        }
+        if (!ensureSession()) return;
+
+        long now = System.nanoTime();
+        PendingCapture capture = pendingCapture;
+        if (capture != null) {
+            pendingCapture = null;
+            capture = new PendingCapture(capture.type(), capture.triggerNanos(), now, capture.triggerFrameNanos(),
+                    capture.baselineNanos(), capture.automatic(), capture.sceneAtTrigger());
+        } else {
+            long last = sampleCount == 0 ? 0L : frameTime[(nextSample + SAMPLE_CAPACITY - 1) % SAMPLE_CAPACITY];
+            capture = new PendingCapture("LOGGING_STOPPED", now, now, last, rollingBaselineNanos, false, latestScene);
+            eventNumber++;
+            lastEventText = "#" + eventNumber + " — " + LocalDateTime.now().format(DISPLAY_TIME);
+        }
+        queueEvent(capture);
+        GmfConfig.CLIENT.developerLogging.set(false);
+        GmfConfig.save();
+        // A subsequent Start action creates a separate, clearly dated session.
+        sessionDirectory = null;
+        lastActionKey = "gui.create_gmf.developer.status.stopping_and_saving";
+    }
+
     private void requestManual(String type) {
         if (!enabled()) {
             lastActionKey = "gui.create_gmf.developer.status.disabled";
@@ -147,7 +202,7 @@ public final class DeveloperDiagnostics {
             lastActionKey = "gui.create_gmf.developer.status.recording_disabled";
             return;
         }
-        ensureSession();
+        if (!ensureSession()) return;
         if (pendingCapture != null) {
             lastActionKey = "gui.create_gmf.developer.status.pending";
             return;
@@ -201,8 +256,21 @@ public final class DeveloperDiagnostics {
         looseItems[index] = scene.looseItemEntities();
     }
 
-    private void ensureSession() {
-        if (sessionDirectory != null) return;
+    private boolean ensureSession() {
+        Path existing = sessionDirectory;
+        if (existing != null) {
+            try {
+                // The launcher or an antivirus can remove an empty directory
+                // between captures.  Recreate it immediately before every
+                // recording action instead of silently losing the report.
+                Files.createDirectories(existing.resolve("events"));
+                return true;
+            } catch (IOException error) {
+                lastActionKey = "gui.create_gmf.developer.status.folder_failed";
+                CreateGmf.LOGGER.warn("[GMF] Cannot restore developer diagnostics folder", error);
+                return false;
+            }
+        }
         try {
             Path root = logRoot();
             Files.createDirectories(root);
@@ -218,9 +286,11 @@ public final class DeveloperDiagnostics {
             String mods = modList();
             Path created = candidate;
             WRITER.execute(() -> writeSessionFiles(created, sessionLog, sessionJson, mods));
+            return true;
         } catch (IOException | RuntimeException error) {
             lastActionKey = "gui.create_gmf.developer.status.folder_failed";
             CreateGmf.LOGGER.warn("[GMF] Cannot create developer diagnostics folder", error);
+            return false;
         }
     }
 
@@ -264,6 +334,7 @@ public final class DeveloperDiagnostics {
 
     private void writeSessionFiles(Path session, String sessionLog, String sessionJson, String mods) {
         try {
+            Files.createDirectories(session.resolve("events"));
             Files.writeString(session.resolve("session.log"), sessionLog);
             Files.writeString(session.resolve("session.json"), sessionJson);
             Files.writeString(session.resolve("mods.txt"), mods);
@@ -319,10 +390,13 @@ public final class DeveloperDiagnostics {
     private void writeEvent(Path session, int number, PendingCapture capture, List<Sample> samples, RuntimeState state) {
         try {
             Path events = session.resolve("events");
+            Files.createDirectories(events);
             String base = String.format("event-%03d-%s", number, capture.type().toLowerCase());
             Files.writeString(events.resolve(base + ".log"), eventLog(capture, samples, state));
             Files.writeString(events.resolve(base + ".json"), eventJson(capture, samples, state));
+            lastActionKey = "gui.create_gmf.developer.status.report_saved";
         } catch (IOException error) {
+            lastActionKey = "gui.create_gmf.developer.status.report_failed";
             CreateGmf.LOGGER.warn("[GMF] Cannot write developer event", error);
         }
     }
