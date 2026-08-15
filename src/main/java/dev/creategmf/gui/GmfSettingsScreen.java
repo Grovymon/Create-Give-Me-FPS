@@ -98,7 +98,11 @@ public final class GmfSettingsScreen extends GmfScreen {
             animationDistanceInput.setMaxLength(2);
             animationDistanceInput.setFilter(value -> value.isEmpty() || value.matches("\\d{1,2}"));
             animationDistanceInput.setBordered(false);
-            animationDistanceInput.setTextColor(0xFFE0DDD6);
+            // The actual value is painted by sliderRow so it can be centred in
+            // the numeric box.  EditBox remains visible to keyboard input but
+            // its own left-aligned text is transparent; otherwise two-digit
+            // values are clipped to their last digit in a narrow edit area.
+            animationDistanceInput.setTextColor(0x00E0DDD6);
             animationDistanceInput.setValue(Integer.toString(GmfConfig.CLIENT.distantAnimationDistance.get().intValue()));
             animationDistanceInput.setResponder(this::applyAnimationDistanceText);
             addRenderableWidget(animationDistanceInput);
@@ -561,9 +565,16 @@ public final class GmfSettingsScreen extends GmfScreen {
         int knob = barLeft + (int) ((barRight - barLeft) * (value - min) / (double) (max - min));
         graphics.fill(knob - 3, controlsY + 3, knob + 4, controlsY + 13, 0xFFE4BB67);
         if (animationDistanceInput != null) {
-            // The EditBox renders the editable number itself.  Drawing a normal
-            // value here as well produced two overlapping copies while dragging.
             drawValueBackground(graphics, inputX, controlsY - 3, 38, mouseX, mouseY);
+            String inputValue = animationDistanceInput.getValue();
+            graphics.drawCenteredString(font, inputValue, inputX + 19, controlsY + 3, 0xFFE0DDD6);
+            // Retain a visible caret while the keyboard field owns focus.  It
+            // is deliberately drawn beside the centred text instead of letting
+            // EditBox reintroduce its left-aligned, clipped rendering.
+            if (animationDistanceInput.isFocused() && (Util.getMillis() / 500L) % 2L == 0L) {
+                int caretX = inputX + 19 + font.width(inputValue) / 2 + 1;
+                graphics.fill(caretX, controlsY + 3, caretX + 1, controlsY + 12, 0xFFE4BB67);
+            }
         } else {
             drawValue(graphics, inputX, controlsY - 3, 38, Component.literal(Integer.toString(value)), mouseX, mouseY);
         }
@@ -573,18 +584,15 @@ public final class GmfSettingsScreen extends GmfScreen {
         animationSliderBottom = animationSliderTop + 22;
         animationSliderSetter = setter;
         if (animationDistanceInput != null) {
-            // EditBox itself only supports left-aligned text.  Position its
-            // narrow, borderless edit area around the centre of our value box
-            // so the visible number (and its caret) stay centred as it changes.
-            String inputValue = animationDistanceInput.getValue();
-            int textWidth = Math.max(font.width(inputValue), font.width("0"));
-            int inputWidth = textWidth + 2;
-            animationDistanceInput.setX(inputX + (38 - inputWidth) / 2);
+            // Keep the input hit area as wide as the complete value box.  A
+            // dynamically narrowed EditBox left too little internal space and
+            // clipped the first digit of values such as 10 or 32.
+            animationDistanceInput.setX(inputX);
             // The surrounding value box is 20 px tall and the Minecraft font
             // is 9 px tall.  Put the text baseline in the visual centre rather
             // than at the top edge of the borderless EditBox.
             animationDistanceInput.setY(controlsY - scrollOffset + 2);
-            animationDistanceInput.setWidth(inputWidth);
+            animationDistanceInput.setWidth(38);
             animationDistanceInput.setHeight(16);
             animationDistanceInput.visible = animationDistanceInput.getY() >= 78
                     && animationDistanceInput.getY() + animationDistanceInput.getHeight() <= contentViewportBottom();
