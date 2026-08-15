@@ -318,6 +318,7 @@
   "gui.create_gmf.developer.status.path_failed": "Could not copy the log path",
   "gui.create_gmf.developer.status.logging_started": "Recording started: session folder created",
   "gui.create_gmf.developer.status.stopping_and_saving": "Recording stopped: saving final report",
+  "gui.create_gmf.developer.status.report_saving": "Saving report",
   "gui.create_gmf.developer.status.report_saved": "Report saved in the GMF folder",
   "gui.create_gmf.developer.status.report_failed": "Could not save the report: check latest.log"
 }

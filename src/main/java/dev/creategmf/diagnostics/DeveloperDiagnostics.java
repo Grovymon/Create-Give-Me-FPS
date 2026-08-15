@@ -136,7 +136,32 @@ public final class DeveloperDiagnostics {
     }
 
     public void requestManualCapture() {
-        requestManual("MANUAL_CAPTURE");
+        if (!enabled()) {
+            lastActionKey = "gui.create_gmf.developer.status.disabled";
+            return;
+        }
+        if (!GmfConfig.CLIENT.developerLogging.get()) {
+            lastActionKey = "gui.create_gmf.developer.status.recording_disabled";
+            return;
+        }
+        if (!ensureSession()) return;
+
+        long now = System.nanoTime();
+        PendingCapture capture = pendingCapture;
+        if (capture != null) {
+            // Do not throw away a marker that is still collecting its post-
+            // event window.  Save the samples gathered so far instead.
+            pendingCapture = null;
+            capture = new PendingCapture(capture.type(), capture.triggerNanos(), now, capture.triggerFrameNanos(),
+                    capture.baselineNanos(), capture.automatic(), capture.sceneAtTrigger());
+        } else {
+            long last = sampleCount == 0 ? 0L : frameTime[(nextSample + SAMPLE_CAPACITY - 1) % SAMPLE_CAPACITY];
+            capture = new PendingCapture("MANUAL_CAPTURE", now, now, last, rollingBaselineNanos, false, latestScene);
+            eventNumber++;
+            lastEventText = "#" + eventNumber + " — " + LocalDateTime.now().format(DISPLAY_TIME);
+        }
+        queueEvent(capture);
+        lastActionKey = "gui.create_gmf.developer.status.report_saving";
     }
 
     /**
