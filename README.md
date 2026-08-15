@@ -6,10 +6,10 @@
   <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
 
-**Current release: 0.1.9**
+**Current release: 0.1.10**
 
-> **New in 0.1.9:** fixed a crash when dragging the full-animation-distance slider.
-> Tooltips now appear only when hovering an option's label, not its input control.
+> **New in 0.1.10:** fixed duplicated digits in the editable animation-distance
+> field and made long setting hints wrap across multiple lines.
 
 0.1.8 added a 0–256 animation-distance field, right-click backwards cycling,
 Minecraft UI click sounds, and hover hints for animation, particle, and
@@ -47,7 +47,7 @@ world and ask the player to keep the same position and camera direction.
 
 | Component | Version |
 | --- | --- |
-| Create: Give Me FPS | 0.1.9 |
+| Create: Give Me FPS | 0.1.10 |
 | Minecraft | 1.21.1 |
 | Loader | NeoForge 21.1.x |
 | Create | 6.0.10 |
@@ -74,7 +74,7 @@ On Linux or macOS:
 The resulting JAR is written to `build/libs/`.
 
 The downloadable release is named
-`Create-Give-Me-FPS-0.1.9-NeoForge-1.21.1.jar`.
+`Create-Give-Me-FPS-0.1.10-NeoForge-1.21.1.jar`.
 
 ## Important limitations
 

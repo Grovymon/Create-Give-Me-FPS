@@ -494,7 +494,14 @@ public final class GmfSettingsScreen extends GmfScreen {
         graphics.fill(barLeft, y + 7, barRight, y + 9, 0xFF594832);
         int knob = barLeft + (int) ((barRight - barLeft) * (value - min) / (double) (max - min));
         graphics.fill(knob - 3, y + 3, knob + 4, y + 13, 0xFFE4BB67);
-        drawValue(graphics, x + width - 44, y - 3, 38, Component.literal(Integer.toString(value)), mouseX, mouseY);
+        int inputX = x + width - 44;
+        if (animationDistanceInput != null) {
+            // The EditBox renders the editable number itself.  Drawing a normal
+            // value here as well produced two overlapping copies while dragging.
+            drawValueBackground(graphics, inputX, y - 3, 38, mouseX, mouseY);
+        } else {
+            drawValue(graphics, inputX, y - 3, 38, Component.literal(Integer.toString(value)), mouseX, mouseY);
+        }
         animationSliderLeft = barLeft;
         animationSliderRight = barRight;
         animationSliderTop = y - scrollOffset - 3;
@@ -537,10 +544,14 @@ public final class GmfSettingsScreen extends GmfScreen {
     }
 
     private void drawValue(GuiGraphics graphics, int x, int y, int width, Component value, int mouseX, int mouseY) {
+        drawValueBackground(graphics, x, y, width, mouseX, mouseY);
+        graphics.drawCenteredString(font, trim(value, width - 8), x + width / 2, y + 6, 0xFFE0DDD6);
+    }
+
+    private void drawValueBackground(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY) {
         boolean hover = contains(x, y, width, 20, mouseX, mouseY);
         graphics.fill(x, y, x + width, y + 20, hover ? 0xFF2A2824 : 0xFF1A1A1A);
         outline(graphics, x, y, x + width, y + 20, hover ? 0xFFE4BB67 : 0xFF5F472A);
-        graphics.drawCenteredString(font, trim(value, width - 8), x + width / 2, y + 6, 0xFFE0DDD6);
     }
 
     private void drawDropdownValue(GuiGraphics graphics, int x, int y, int width, Component value, boolean open,
@@ -609,7 +620,10 @@ public final class GmfSettingsScreen extends GmfScreen {
         for (int index = tooltipAreas.size() - 1; index >= 0; index--) {
             TooltipArea area = tooltipAreas.get(index);
             if (area.contains(mouseX, mouseY)) {
-                graphics.renderTooltip(font, area.tooltip(), mouseX, mouseY);
+                // Vanilla's single-Component overload does not wrap.  Split the
+                // text first so longer explanations remain readable on screen.
+                int tooltipWidth = Math.min(360, Math.max(180, width / 3));
+                graphics.renderTooltip(font, font.split(area.tooltip(), tooltipWidth), mouseX, mouseY);
                 return;
             }
         }
