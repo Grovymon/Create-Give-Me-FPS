@@ -303,5 +303,13 @@
   "gui.create_gmf.developer.copy_path": "Copy path",
   "gui.create_gmf.developer.mark_problem": "Mark problem",
   "gui.create_gmf.developer.save_report": "Save report",
-  "gui.create_gmf.developer.last_event": "Last event: %s"
+  "gui.create_gmf.developer.last_event": "Last event: %s",
+  "gui.create_gmf.developer.status.disabled": "Developer mode is disabled",
+  "gui.create_gmf.developer.status.recording_disabled": "Diagnostic recording is disabled",
+  "gui.create_gmf.developer.status.pending": "An event is already being recorded",
+  "gui.create_gmf.developer.status.capturing": "Marker added: collecting another 5 seconds",
+  "gui.create_gmf.developer.status.folder_opened": "Log folder opened",
+  "gui.create_gmf.developer.status.folder_failed": "Could not open or create the log folder",
+  "gui.create_gmf.developer.status.path_copied": "Log path copied",
+  "gui.create_gmf.developer.status.path_failed": "Could not copy the log path"
 }

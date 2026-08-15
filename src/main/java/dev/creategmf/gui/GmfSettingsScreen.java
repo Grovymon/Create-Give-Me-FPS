@@ -467,8 +467,9 @@ public final class GmfSettingsScreen extends GmfScreen {
             addHitArea(contentLeft + 24 + actionWidth, y, actionWidth, 28, DeveloperDiagnostics.INSTANCE::requestManualCapture);
             y = drawWrappedText(graphics, Component.translatable("gui.create_gmf.developer.last_event",
                     DeveloperDiagnostics.INSTANCE.lastEventText()), contentLeft + 12, y + 40, w - 24, 0xFFE4BB67);
-            if (!DeveloperDiagnostics.INSTANCE.lastActionText().isBlank()) {
-                y = drawWrappedText(graphics, Component.literal(DeveloperDiagnostics.INSTANCE.lastActionText()),
+            Component actionMessage = DeveloperDiagnostics.INSTANCE.lastActionMessage();
+            if (!actionMessage.getString().isBlank()) {
+                y = drawWrappedText(graphics, actionMessage,
                         contentLeft + 12, y + 4, w - 24, 0xFFA9A196);
             }
         }

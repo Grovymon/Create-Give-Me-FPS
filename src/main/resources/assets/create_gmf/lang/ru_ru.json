@@ -303,5 +303,13 @@
   "gui.create_gmf.developer.copy_path": "Копировать путь",
   "gui.create_gmf.developer.mark_problem": "Отметить проблему",
   "gui.create_gmf.developer.save_report": "Сохранить отчёт",
-  "gui.create_gmf.developer.last_event": "Последнее событие: %s"
+  "gui.create_gmf.developer.last_event": "Последнее событие: %s",
+  "gui.create_gmf.developer.status.disabled": "Режим разработчика выключен",
+  "gui.create_gmf.developer.status.recording_disabled": "Запись диагностики выключена",
+  "gui.create_gmf.developer.status.pending": "Событие уже записывается",
+  "gui.create_gmf.developer.status.capturing": "Метка добавлена: собираем ещё 5 секунд",
+  "gui.create_gmf.developer.status.folder_opened": "Папка логов открыта",
+  "gui.create_gmf.developer.status.folder_failed": "Не удалось открыть или создать папку логов",
+  "gui.create_gmf.developer.status.path_copied": "Путь к логам скопирован",
+  "gui.create_gmf.developer.status.path_failed": "Не удалось скопировать путь"
 }

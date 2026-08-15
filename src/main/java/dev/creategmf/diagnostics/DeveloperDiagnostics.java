@@ -12,7 +12,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -29,6 +28,7 @@ import dev.creategmf.profiler.MemorySnapshot;
 
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLPaths;
 
@@ -40,7 +40,7 @@ import net.neoforged.fml.loading.FMLPaths;
 public final class DeveloperDiagnostics {
     public static final DeveloperDiagnostics INSTANCE = new DeveloperDiagnostics();
 
-    private static final int SAMPLE_CAPACITY = 4_096;
+    private static final int SAMPLE_CAPACITY = 8_192;
     private static final long PRE_EVENT_NANOS = 10_000_000_000L;
     private static final long POST_EVENT_NANOS = 5_000_000_000L;
     private static final long COOLDOWN_NANOS = 8_000_000_000L;
@@ -76,7 +76,7 @@ public final class DeveloperDiagnostics {
 
     private volatile SceneCensus latestScene = SceneCensus.EMPTY;
     private volatile String lastEventText = "—";
-    private volatile String lastActionText = "";
+    private volatile String lastActionKey = "";
     private volatile Path sessionDirectory;
     private int nextSample;
     private int sampleCount;
@@ -140,18 +140,22 @@ public final class DeveloperDiagnostics {
 
     private void requestManual(String type) {
         if (!enabled()) {
-            lastActionText = "Режим разработчика выключен";
+            lastActionKey = "gui.create_gmf.developer.status.disabled";
+            return;
+        }
+        if (!GmfConfig.CLIENT.developerLogging.get()) {
+            lastActionKey = "gui.create_gmf.developer.status.recording_disabled";
             return;
         }
         ensureSession();
         if (pendingCapture != null) {
-            lastActionText = "Событие уже записывается";
+            lastActionKey = "gui.create_gmf.developer.status.pending";
             return;
         }
         long now = System.nanoTime();
         long last = sampleCount == 0 ? 0L : frameTime[(nextSample + SAMPLE_CAPACITY - 1) % SAMPLE_CAPACITY];
         scheduleCapture(type, now, last, rollingBaselineNanos, false);
-        lastActionText = "Метка добавлена: собираем ещё 5 секунд";
+        lastActionKey = "gui.create_gmf.developer.status.capturing";
     }
 
     private String automaticEventType(long frame, long baseline) {
@@ -164,7 +168,7 @@ public final class DeveloperDiagnostics {
     private void scheduleCapture(String type, long now, long frame, long baseline, boolean automatic) {
         pendingCapture = new PendingCapture(type, now, now + POST_EVENT_NANOS, frame, baseline, automatic, latestScene);
         eventNumber++;
-        lastEventText = "Событие #" + eventNumber + " — " + LocalDateTime.now().format(DISPLAY_TIME);
+        lastEventText = "#" + eventNumber + " — " + LocalDateTime.now().format(DISPLAY_TIME);
     }
 
     private void writeSample(int index, long now, long duration, long baseline) {
@@ -209,7 +213,7 @@ public final class DeveloperDiagnostics {
             Path created = candidate;
             WRITER.execute(() -> writeSessionFiles(created, sessionLog, sessionJson, mods));
         } catch (IOException | RuntimeException error) {
-            lastActionText = "Не удалось создать папку логов";
+            lastActionKey = "gui.create_gmf.developer.status.folder_failed";
             CreateGmf.LOGGER.warn("[GMF] Cannot create developer diagnostics folder", error);
         }
     }
@@ -406,10 +410,10 @@ public final class DeveloperDiagnostics {
         try {
             Files.createDirectories(logRoot());
             Util.getPlatform().openUri(logRoot().toUri().toString());
-            lastActionText = "Папка логов открыта";
+            lastActionKey = "gui.create_gmf.developer.status.folder_opened";
             return true;
         } catch (IOException | RuntimeException error) {
-            lastActionText = "Не удалось открыть папку логов";
+            lastActionKey = "gui.create_gmf.developer.status.folder_failed";
             CreateGmf.LOGGER.warn("[GMF] Cannot open developer diagnostics folder", error);
             return false;
         }
@@ -418,10 +422,10 @@ public final class DeveloperDiagnostics {
     public boolean copyLogPath() {
         try {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(logRoot().toAbsolutePath().toString()), null);
-            lastActionText = "Путь к логам скопирован";
+            lastActionKey = "gui.create_gmf.developer.status.path_copied";
             return true;
         } catch (RuntimeException error) {
-            lastActionText = "Не удалось скопировать путь";
+            lastActionKey = "gui.create_gmf.developer.status.path_failed";
             CreateGmf.LOGGER.warn("[GMF] Cannot copy developer diagnostics path", error);
             return false;
         }
@@ -435,8 +439,8 @@ public final class DeveloperDiagnostics {
         return lastEventText;
     }
 
-    public String lastActionText() {
-        return lastActionText;
+    public Component lastActionMessage() {
+        return lastActionKey.isBlank() ? Component.empty() : Component.translatable(lastActionKey);
     }
 
     private boolean enabled() {
