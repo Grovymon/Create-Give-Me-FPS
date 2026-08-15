@@ -99,9 +99,9 @@ public final class GmfSettingsScreen extends GmfScreen {
             animationDistanceInput.setFilter(value -> value.isEmpty() || value.matches("\\d{1,2}"));
             animationDistanceInput.setBordered(false);
             // The actual value is painted by sliderRow so it can be centred in
-            // the numeric box.  EditBox remains visible to keyboard input but
-            // its own left-aligned text is transparent; otherwise two-digit
-            // values are clipped to their last digit in a narrow edit area.
+            // the numeric box.  Do not render EditBox itself: some render
+            // paths ignore a transparent text colour and leave a second,
+            // left-aligned copy of the digits beside the centred value.
             animationDistanceInput.setTextColor(0x00E0DDD6);
             animationDistanceInput.setValue(Integer.toString(GmfConfig.CLIENT.distantAnimationDistance.get().intValue()));
             animationDistanceInput.setResponder(this::applyAnimationDistanceText);
@@ -594,8 +594,11 @@ public final class GmfSettingsScreen extends GmfScreen {
             animationDistanceInput.setY(controlsY - scrollOffset + 2);
             animationDistanceInput.setWidth(38);
             animationDistanceInput.setHeight(16);
-            animationDistanceInput.visible = animationDistanceInput.getY() >= 78
-                    && animationDistanceInput.getY() + animationDistanceInput.getHeight() <= contentViewportBottom();
+            // Input focus and keyboard handling work through Screen's focused
+            // child even when it is not rendered.  The full visual field is
+            // drawn above, which guarantees that no left-aligned ghost digits
+            // can appear in the value box.
+            animationDistanceInput.visible = false;
             // Keep the complete visual value field clickable, even though the
             // edit control is intentionally only as wide as its centred text.
             addHitArea(inputX, controlsY - 3, 38, 20, this::focusAnimationDistanceInput);
