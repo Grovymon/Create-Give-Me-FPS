@@ -19,9 +19,9 @@ Target platform: **Minecraft Java 1.21.1 · NeoForge · Create 6.0.10 · Flywhee
 
 ## What the mod does
 
-Press **G** while in a world to open the control panel. Choose a ready-made
-graphics profile or configure individual visual systems. The settings are
-stored locally for the client.
+Open the mod's configuration screen from Minecraft's Mods menu. Choose a
+ready-made graphics profile or configure individual visual systems. The
+settings are stored locally for the client.
 
 ### Graphics profiles
 
@@ -136,7 +136,8 @@ pack still need mutually compatible versions.
 2. Download `Create-Give-Me-FPS-0.1.2-NeoForge-1.21.1.jar` from
    [Releases](../../releases).
 3. Put the JAR into the instance's `mods` directory.
-4. Start the game and press **G** in a loaded world.
+4. Open Minecraft's Mods menu and select **Create: Give Me FPS** to configure
+   the client.
 
 ## Important limitations
 
