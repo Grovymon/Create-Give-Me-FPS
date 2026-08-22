@@ -23,6 +23,8 @@ import dev.creategmf.optimization.belts.BeltShadowCounters;
 import dev.creategmf.optimization.belts.BeltShadowOptimizer;
 import dev.creategmf.optimization.particles.CreateParticleOptimizer;
 import dev.creategmf.optimization.particles.CreateParticleOptimizer.ParticleCounters;
+import dev.creategmf.optimization.occlusion.CreateOcclusionController;
+import dev.creategmf.optimization.occlusion.CreateOcclusionController.Snapshot;
 import dev.creategmf.profiler.MemoryMetricsCollector;
 import dev.creategmf.profiler.MemorySnapshot;
 
@@ -348,13 +350,17 @@ public final class DeveloperDiagnostics {
 
     private RuntimeState runtimeState() {
         ParticleCounters particles = CreateParticleOptimizer.counters();
+        Snapshot occlusion = CreateOcclusionController.snapshot();
         return new RuntimeState(GmfRuntimeStatus.animationHookObserved(), GmfRuntimeStatus.beltItemHookObserved(),
                 GmfRuntimeStatus.particleHookObserved(), GmfConfig.CLIENT.enabled.get(),
                 GmfConfig.CLIENT.renderTransportedBeltItems.get(), GmfConfig.CLIENT.createParticleMode.get().name(),
                 GmfConfig.CLIENT.distantAnimationMode.get().name(), GmfConfig.CLIENT.flywheelBackend.get().name(),
                 GmfConfig.CLIENT.acceleratedRenderer.get(), ShaderStatusDetector.isShaderPackActive(),
                 String.join(", ", ModCompatibilityDetector.overlappingOptimizers()), particles.steamSmoke(),
-                particles.sparks(), particles.itemBreak(), particles.fluidSplash(), particles.directFluidEffectsSuppressed());
+                particles.sparks(), particles.itemBreak(), particles.fluidSplash(), particles.directFluidEffectsSuppressed(),
+                occlusion.active(), occlusion.entityCullingAvailable(), occlusion.nowheelDetected(), occlusion.provider(),
+                occlusion.tracked(), occlusion.visible(), occlusion.occluded(), occlusion.visualRemovals(),
+                occlusion.visualRestores(), occlusion.stateChanges(), occlusion.creationSkips());
     }
 
     private void writeSessionFiles(Path session, String sessionLog, String sessionJson, String mods) {
@@ -440,6 +446,7 @@ public final class DeveloperDiagnostics {
                 .append(", belts=").append(scene.beltControllers())
                 .append(", transported_items=").append(scene.transportedItems())
                 .append(", contraptions=").append(scene.contraptions())
+                .append(", contraption_blocks=").append(scene.contraptionBlocks())
                 .append(", loose_items=").append(scene.looseItemEntities()).append('\n');
         result.append("Top mechanism groups (estimated visual cost, not a profiler measurement):\n");
         scene.topMechanisms(10).forEach(entry -> result.append(" - ").append(entry.group().name())
@@ -457,6 +464,17 @@ public final class DeveloperDiagnostics {
                 .append(", sparks=").append(state.sparks()).append(", item_break=").append(state.itemBreak())
                 .append(", fluid_splash=").append(state.fluidSplash())
                 .append(", direct_fluid_effects_suppressed=").append(state.directFluidEffectsSuppressed()).append('\n');
+        result.append("Occlusion culling: active=").append(state.occlusionActive())
+                .append(", entity_culling_available=").append(state.entityCullingAvailable())
+                .append(", nowheel_detected=").append(state.nowheelDetected())
+                .append(", provider=").append(state.occlusionProvider())
+                .append(", tracked=").append(state.occlusionTracked())
+                .append(", visible=").append(state.occlusionVisible())
+                .append(", occluded=").append(state.occlusionOccluded())
+                .append(", removed=").append(state.occlusionVisualRemovals())
+                .append(", restored=").append(state.occlusionVisualRestores())
+                .append(", state_changes=").append(state.occlusionStateChanges())
+                .append(", creation_skips=").append(state.occlusionCreationSkips()).append('\n');
         return result.toString();
     }
 
@@ -476,7 +494,19 @@ public final class DeveloperDiagnostics {
                 .append(", \"particleMode\": \"").append(json(state.particleMode()))
                 .append("\", \"directFluidEffectsSuppressed\": ").append(state.directFluidEffectsSuppressed())
                 .append(", \"distantAnimationMode\": \"").append(json(state.animationMode()))
-                .append("\", \"acceleratedRenderer\": ").append(state.acceleratedRenderer()).append("},\n");
+                .append("\", \"acceleratedRenderer\": ").append(state.acceleratedRenderer())
+                .append(", \"occlusion\": {\"active\": ").append(state.occlusionActive())
+                .append(", \"entityCullingAvailable\": ").append(state.entityCullingAvailable())
+                .append(", \"nowheelDetected\": ").append(state.nowheelDetected())
+                .append(", \"provider\": \"").append(json(state.occlusionProvider()))
+                .append("\", \"tracked\": ").append(state.occlusionTracked())
+                .append(", \"visible\": ").append(state.occlusionVisible())
+                .append(", \"occluded\": ").append(state.occlusionOccluded())
+                .append(", \"removed\": ").append(state.occlusionVisualRemovals())
+                .append(", \"restored\": ").append(state.occlusionVisualRestores())
+                .append(", \"stateChanges\": ").append(state.occlusionStateChanges())
+                .append(", \"creationSkips\": ").append(state.occlusionCreationSkips())
+                .append("}},\n");
         result.append("  \"nearbyScan\": ").append(sceneJson(capture.sceneAtTrigger())).append(",\n");
         result.append("  \"samples\": [\n");
         for (int i = 0; i < samples.size(); i++) {
@@ -493,6 +523,7 @@ public final class DeveloperDiagnostics {
         return "{\"chunks\":" + scene.chunksScanned() + ",\"createBlockEntities\":" + scene.createBlockEntities()
                 + ",\"kinetics\":" + scene.kineticBlockEntities() + ",\"belts\":" + scene.beltControllers()
                 + ",\"transportedItems\":" + scene.transportedItems() + ",\"contraptions\":" + scene.contraptions()
+                + ",\"contraptionBlocks\":" + scene.contraptionBlocks()
                 + ",\"looseItems\":" + scene.looseItemEntities() + "}";
     }
 
@@ -594,7 +625,10 @@ public final class DeveloperDiagnostics {
     private record RuntimeState(boolean animationHookSeen, boolean beltItemHookSeen, boolean particleHookSeen,
             boolean gmfEnabled, boolean beltItemsEnabled, String particleMode, String animationMode,
             String flywheelBackend, boolean acceleratedRenderer, boolean shaderActive, String overlappingOptimizers,
-            long steamSmoke, long sparks, long itemBreak, long fluidSplash, long directFluidEffectsSuppressed) {
+            long steamSmoke, long sparks, long itemBreak, long fluidSplash, long directFluidEffectsSuppressed,
+            boolean occlusionActive, boolean entityCullingAvailable, boolean nowheelDetected, String occlusionProvider,
+            int occlusionTracked, int occlusionVisible, int occlusionOccluded, long occlusionVisualRemovals,
+            long occlusionVisualRestores, long occlusionStateChanges, long occlusionCreationSkips) {
     }
 
     private record Sample(long timeNanos, long frameNanos, long baselineNanos, long particleRequests,

@@ -56,6 +56,22 @@ shafts, gears, belts, moving parts, and kinetic block entities. The mod offers:
 The mechanisms continue to work. These controls change only how supported
 client render paths are updated and drawn.
 
+### Occlusion Culling for hidden mechanisms
+
+The **Mechanisms** page includes **Hide occluded mechanisms**. [Entity
+Culling](https://modrinth.com/mod/entityculling) is a required client
+dependency: NeoForge stops startup with its missing-dependency screen if it is
+not installed. GMF uses its already-calculated visibility transitions to remove hidden Create
+block-entity visuals from Flywheel and add them back when visible. It never
+uses per-frame raycasts and never changes kinetic logic, block ticks, or
+contraption simulation.
+
+If [Create: Nowheel](https://github.com/lap2ka/nowheel) is installed, GMF
+detects it and yields this queue to Nowheel to avoid duplicate visual
+remove/add operations. This first integration deliberately covers ordinary
+Create block-entity visuals; contraption entity visuals are not automatically
+occlusion-culled.
+
 ### Belts and item rendering
 
 Large item transport systems can overload the renderer even when shadows are
@@ -126,14 +142,15 @@ not a replacement for a full CPU/GPU profiler.
 | Create | 6.0.10 |
 | Flywheel | 1.0.6 |
 | Java | 21 |
+| Entity Culling | Required on the client; GMF will not start without it |
 
 The mod is client-side. A server does not need it, but all mods installed in a
 pack still need mutually compatible versions.
 
 ## Installation
 
-1. Install NeoForge, Create, and Flywheel for Minecraft 1.21.1.
-2. Download `Create-Give-Me-FPS-0.1.2-NeoForge-1.21.1.jar` from
+1. Install NeoForge, Create, Flywheel, and Entity Culling for Minecraft 1.21.1.
+2. Download `Create-Give-Me-FPS-0.1.3-NeoForge-1.21.1.jar` from
    [Releases](../../releases).
 3. Put the JAR into the instance's `mods` directory.
 4. Open Minecraft's Mods menu and select **Create: Give Me FPS** to configure
@@ -165,5 +182,9 @@ The optional Accelerated Rendering feature is adapted from
 [CreateBetterFPS](https://github.com/MoePus/CreateBetterFPS) by MoePus under
 the MIT License. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the
 preserved [original notice](THIRD_PARTY_LICENSES/CreateBetterFPS-MIT.txt).
+
+The optional hidden-mechanism culling bridge is adapted from
+[Create: Nowheel](https://github.com/lap2ka/nowheel) by Lap2ka under the MIT
+License. See the preserved [original notice](THIRD_PARTY_LICENSES/Nowheel-MIT.txt).
 
 This project is released under the [MIT License](LICENSE).

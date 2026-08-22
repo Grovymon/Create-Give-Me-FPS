@@ -13,11 +13,12 @@ public record SceneCensus(
         int beltControllers,
         int transportedItems,
         int contraptions,
+        int contraptionBlocks,
         int looseItemEntities,
         Map<MechanismAnimationGroup, Integer> mechanismCounts,
         Map<String, Integer> blockEntityTypeCounts
 ) {
-    public static final SceneCensus EMPTY = new SceneCensus(0, 0, 0, 0, 0, 0, 0, Map.of(), Map.of());
+    public static final SceneCensus EMPTY = new SceneCensus(0, 0, 0, 0, 0, 0, 0, 0, Map.of(), Map.of());
 
     public List<MechanismLoad> topMechanisms(int limit) {
         return mechanismCounts.entrySet().stream()

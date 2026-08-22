@@ -54,7 +54,7 @@ public final class GmfProfilerScreen extends GmfScreen {
         graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.belts_estimated",
                 scene.beltControllers(), scene.transportedItems()), x, y + 62, 0xFFB8C1CC);
         graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.contraptions_estimated",
-                scene.contraptions()), x, y + 76, 0xFFB8C1CC);
+                scene.contraptions(), scene.contraptionBlocks()), x, y + 76, 0xFFB8C1CC);
         graphics.drawString(font, Component.translatable("gui.create_gmf.profiler.shadow_counters",
                 counters.attempted(), counters.rendered(), counters.skipped()), x, y + 96, 0xFFE4BB67);
         List<MechanismLoad> heaviest = scene.topMechanisms(3);

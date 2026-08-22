@@ -35,3 +35,12 @@ type = "required"
 versionRange = "${create_version_range}"
 ordering = "AFTER"
 side = "BOTH"
+
+# GMF's hidden-mechanism optimisation uses Entity Culling's visibility
+# transitions.  Keep this client-only so servers do not need the mod.
+[[dependencies."${mod_id}"]]
+modId = "entityculling"
+type = "required"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"

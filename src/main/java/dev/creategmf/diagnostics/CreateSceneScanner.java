@@ -67,16 +67,20 @@ public final class CreateSceneScanner {
         }
 
         int contraptions = 0;
+        int contraptionBlocks = 0;
         int looseItemEntities = 0;
         for (Entity entity : level.entitiesForRendering()) {
-            if (entity instanceof AbstractContraptionEntity) {
+            if (entity instanceof AbstractContraptionEntity contraptionEntity) {
                 contraptions++;
+                if (contraptionEntity.getContraption() != null) {
+                    contraptionBlocks += contraptionEntity.getContraption().getBlocks().size();
+                }
             }
             if (entity instanceof net.minecraft.world.entity.item.ItemEntity) {
                 looseItemEntities++;
             }
         }
-        return new SceneCensus(chunks, createBlockEntities, kinetics, belts, items, contraptions,
+        return new SceneCensus(chunks, createBlockEntities, kinetics, belts, items, contraptions, contraptionBlocks,
                 looseItemEntities, Map.copyOf(mechanismCounts), Map.copyOf(blockEntityTypeCounts));
     }
 

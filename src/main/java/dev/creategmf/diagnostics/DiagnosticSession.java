@@ -106,7 +106,7 @@ public final class DiagnosticSession {
             return new Classification(BottleneckType.TRANSPORTED_ITEMS, EvidenceStatus.ESTIMATED, Confidence.MEDIUM,
                     "diagnostic.create_gmf.reason.many_transported_items");
         }
-        if (scene.contraptions() >= 3) {
+        if (scene.contraptions() >= 3 || scene.contraptionBlocks() >= 128) {
             return new Classification(BottleneckType.CONTRAPTIONS, EvidenceStatus.ESTIMATED, Confidence.MEDIUM,
                     "diagnostic.create_gmf.reason.many_contraptions");
         }

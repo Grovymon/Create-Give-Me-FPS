@@ -17,4 +17,12 @@ public final class ModCompatibilityDetector {
         if (mods.isLoaded("flerovium")) found.add("Flerovium");
         return found;
     }
+
+    public static boolean hasEntityCulling() {
+        return ModList.get().isLoaded("entityculling");
+    }
+
+    public static boolean hasNowheel() {
+        return ModList.get().isLoaded("nowheel");
+    }
 }

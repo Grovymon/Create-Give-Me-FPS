@@ -17,6 +17,7 @@ import dev.creategmf.integration.FlywheelBackendController;
 import dev.creategmf.integration.ModCompatibilityDetector;
 import dev.creategmf.integration.ShaderStatusDetector;
 import dev.creategmf.optimization.animations.DistantAnimationController;
+import dev.creategmf.optimization.occlusion.CreateOcclusionController;
 
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
@@ -218,6 +219,15 @@ public final class GmfSettingsScreen extends GmfScreen {
         y = beginCard(graphics, left, y, cardWidth, Component.translatable("gui.create_gmf.card.general"));
         y = toggleRow(graphics, left, y, cardWidth, Component.translatable("gui.create_gmf.all_mechanisms"),
                 allMechanismsEnabled(), this::toggleAllMechanisms, mouseX, mouseY);
+        y = toggleRow(graphics, left, y, cardWidth,
+                Component.translatable("config.create_gmf.occlusion_culling"),
+                GmfConfig.CLIENT.createOcclusionCulling.get(), () -> {
+                    GmfConfig.CLIENT.createOcclusionCulling.set(!GmfConfig.CLIENT.createOcclusionCulling.get());
+                    customAndSave();
+                    CreateOcclusionController.onConfigurationChanged();
+                }, mouseX, mouseY);
+        addTooltipArea(left, y - 29, cardWidth - 64, 22,
+                Component.translatable("tooltip.create_gmf.occlusion_culling"));
         y = sliderRow(graphics, left, y, cardWidth, Component.translatable("config.create_gmf.animation_distance_slider"),
                 GmfConfig.CLIENT.distantAnimationDistance.get().intValue(), 0, MAX_ANIMATION_DISTANCE,
                 this::setAnimationDistance, Component.translatable("tooltip.create_gmf.animation_distance"), mouseX, mouseY);

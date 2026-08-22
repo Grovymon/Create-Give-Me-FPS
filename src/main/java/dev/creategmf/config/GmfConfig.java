@@ -5,7 +5,7 @@ import java.util.EnumMap;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class GmfConfig {
-    public static final int CURRENT_VERSION = 11;
+    public static final int CURRENT_VERSION = 12;
     public static final ClientValues CLIENT;
     public static final ModConfigSpec SPEC;
 
@@ -29,6 +29,7 @@ public final class GmfConfig {
         CLIENT.profilerMode.set(ProfilerMode.LIGHT);
         CLIENT.flywheelBackend.set(FlywheelBackendMode.DEFAULT);
         CLIENT.acceleratedRenderer.set(true);
+        CLIENT.createOcclusionCulling.set(true);
         CLIENT.diagnosticDurationSeconds.set(10);
         CLIENT.developerMode.set(false);
         CLIENT.developerLogging.set(true);
@@ -55,6 +56,9 @@ public final class GmfConfig {
         CLIENT.renderItemBreakParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
         CLIENT.renderWaterSplashParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
         CLIENT.crushingOutputRendering.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
+        // Entity Culling is a required client dependency. This safe visual-only
+        // optimisation stays enabled for every preset, including Potato.
+        CLIENT.createOcclusionCulling.set(true);
         CLIENT.mechanismAnimations.values().forEach(value -> value.set(profile != PcProfile.POTATO));
 
         switch (profile) {
@@ -107,6 +111,7 @@ public final class GmfConfig {
         public final ModConfigSpec.EnumValue<FlywheelBackendMode> flywheelBackend;
         public final ModConfigSpec.BooleanValue acceleratedRenderer;
         public final ModConfigSpec.BooleanValue crushingOutputRendering;
+        public final ModConfigSpec.BooleanValue createOcclusionCulling;
         public final EnumMap<MechanismAnimationGroup, ModConfigSpec.BooleanValue> mechanismAnimations;
         public final ModConfigSpec.IntValue diagnosticDurationSeconds;
         public final ModConfigSpec.BooleanValue developerMode;
@@ -172,6 +177,13 @@ public final class GmfConfig {
 
             builder.push("crushingWheels");
             crushingOutputRendering = builder.define("renderLooseItemsNearCrushingWheels", true);
+            builder.pop();
+
+            builder.push("occlusionCulling");
+            createOcclusionCulling = builder.comment(
+                    "Uses the required Entity Culling visibility transitions to remove hidden Create block-entity visuals. "
+                            + "Does not change machine logic. Disabled automatically when Create: Nowheel is installed.")
+                    .define("createOcclusionCulling", true);
             builder.pop();
 
             builder.push("mechanismAnimations");

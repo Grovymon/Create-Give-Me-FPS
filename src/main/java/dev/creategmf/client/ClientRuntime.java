@@ -8,6 +8,7 @@ import dev.creategmf.gui.GmfDiagnosticsScreen;
 import dev.creategmf.gui.GmfSettingsScreen;
 import dev.creategmf.gui.GmfOptimizationBenchmarkScreen;
 import dev.creategmf.optimization.animations.DistantAnimationController;
+import dev.creategmf.optimization.occlusion.CreateOcclusionController;
 import dev.creategmf.profiler.FrameTimeCollector;
 import dev.creategmf.profiler.MemoryMetricsCollector;
 
@@ -49,6 +50,7 @@ public final class ClientRuntime {
             MemoryMetricsCollector.INSTANCE.sample();
         }
         DistantAnimationController.tick();
+        CreateOcclusionController.onClientTick();
         DeveloperDiagnostics.INSTANCE.onClientTick();
         PcBenchmarkSession.INSTANCE.tick();
         if (DiagnosticSession.INSTANCE.isActive() && minecraft.screen != null) {

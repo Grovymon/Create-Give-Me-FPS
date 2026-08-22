@@ -2,6 +2,7 @@ package dev.creategmf.integration;
 
 import dev.creategmf.CreateGmf;
 import dev.creategmf.config.FlywheelBackendMode;
+import dev.creategmf.optimization.occlusion.CreateOcclusionController;
 import dev.engine_room.flywheel.impl.NeoForgeFlwConfig;
 
 /**
@@ -18,6 +19,9 @@ public final class FlywheelBackendController {
 
     public static boolean apply(FlywheelBackendMode mode) {
         try {
+            // Visual managers are recreated only after restart.  Restore any
+            // GMF-hidden visual before persisting the pending backend change.
+            CreateOcclusionController.clearForRendererChange();
             NeoForgeFlwConfig.INSTANCE.client.backend.set(mode.flywheelValue());
             NeoForgeFlwConfig.INSTANCE.client.backend.save();
 

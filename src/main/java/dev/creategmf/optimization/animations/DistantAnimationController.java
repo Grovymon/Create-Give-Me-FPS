@@ -22,6 +22,14 @@ public final class DistantAnimationController {
 
     private static long frameIndex;
     private static long tickIndex;
+    /**
+     * Rebuild nearby Create visuals after crossing an animation-distance
+     * boundary.  64 blocks was too coarse: a player could leave a 32-block
+     * radius and return without ever asking Flywheel to refresh a visual that
+     * had been deliberately made static.  Eight blocks keeps the scan bounded
+     * while making the return to a factory reliably resume its animations.
+     */
+    private static final double VISUAL_REFRESH_MOVEMENT_SQUARED = 8.0 * 8.0;
     private static Vec3 lastRefreshPosition;
 
     private DistantAnimationController() {
@@ -144,6 +152,11 @@ public final class DistantAnimationController {
         return Math.floorDiv(System.nanoTime(), intervalNanos);
     }
 
+    public static boolean shouldUpdateReducedTick(int visualId) {
+        int interval = Math.max(1, (int) Math.ceil(20.0 / Math.max(1, GmfConfig.CLIENT.reducedAnimationFps.get())));
+        return Math.floorMod(tickIndex + visualId, interval) == 0;
+    }
+
     public static void tick() {
         tickIndex++;
         RotationAnimationRegistry.onClientTick();
@@ -157,7 +170,7 @@ public final class DistantAnimationController {
         if (lastRefreshPosition == null) {
             lastRefreshPosition = current;
             refreshLoadedKinetics();
-        } else if (current.distanceToSqr(lastRefreshPosition) >= 4096) {
+        } else if (current.distanceToSqr(lastRefreshPosition) >= VISUAL_REFRESH_MOVEMENT_SQUARED) {
             lastRefreshPosition = current;
             refreshAnimationBoundary();
         }
