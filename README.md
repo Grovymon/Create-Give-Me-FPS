@@ -188,3 +188,9 @@ The optional hidden-mechanism culling bridge is adapted from
 License. See the preserved [original notice](THIRD_PARTY_LICENSES/Nowheel-MIT.txt).
 
 This project is released under the [MIT License](LICENSE).
+
+---
+
+## Community / Сообщество
+
+💬 **[Join the Discord server / Присоединиться к Discord-серверу](https://discord.gg/gUPsQCnTeN)**
