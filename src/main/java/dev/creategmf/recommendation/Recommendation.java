@@ -10,9 +10,11 @@ public record Recommendation(
         String visualImpactTranslationKey,
         Confidence confidence,
         String reasonTranslationKey,
-        Action action
+        Action action,
+        long evidenceCount
 ) {
     public enum Action {
-        BELT_SHADOW_DISTANCE
+        BELT_SHADOW_DISTANCE, TRANSPORTED_ITEMS, OFFSCREEN, OCCLUSION, PARTICLES, VISUAL_TICK_DIVISOR,
+        RENDERER_EXPERIMENT
     }
 }

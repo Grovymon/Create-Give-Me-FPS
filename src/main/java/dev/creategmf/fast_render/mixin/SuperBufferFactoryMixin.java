@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class SuperBufferFactoryMixin {
     @Inject(method = "create", at = @At(value = "HEAD"), cancellable = true, require = 0)
     public void onCreate(MeshData data, CallbackInfoReturnable<SuperByteBuffer> cir) {
-        if (!GmfConfig.CLIENT.acceleratedRenderer.get()) return;
+        if (!dev.creategmf.client.RendererRestartTracker.acceleratedAtLaunch()) return;
         cir.setReturnValue(new SodiumByteBuffer(new MutableTemplateMesh(data).toImmutable()));
     }
 }

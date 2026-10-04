@@ -1,34 +1,35 @@
 # Benchmark methodology
 
-## PC benchmark
+## Runtime A/B
 
-The benchmark warms up first, then runs small CPU transformation/iteration
-slices while normal frame sampling continues. Each slice has a strict time
-budget to avoid freezing the client. Results store measured operations per
-millisecond, frame statistics, heap headroom and GC deltas. The hardware profile
-is a rule-based starting point and remains user-editable.
+Select exactly one target: belt shadows, occlusion, off-screen animation pause,
+distant animation throttling, transported items, or particles.
+Five seconds baseline → one second transition → five seconds optimized.
+The screen closes for gameplay sampling. Opening any screen cancels capture.
+Completion, cancellation and world change restore the exact original visual snapshot, including GMF-off.
 
-## Optimization A/B benchmark
+Backend and accelerated renderer are restart-required experiments, so live Start is disabled.
+Use two separately restarted runs with the same scene and launch settings; do not pretend
+that a changed config value changes already-applied renderer mixins.
 
-The user starts a bounded session in a chosen factory scene. GMF immediately
-closes its screen, renders progress over normal gameplay, and records a
-baseline with the belt-shadow optimization forced off, waits through a short
-transition, records the same metrics with it forced on, then clears the runtime
-override. It stores average FPS, 1% low, average/variance/max frame time, MSPT,
-heap, GC deltas, and shadow counters. No FPS result is predicted.
+Results contain average FPS, 1% low only with sufficient samples, mean/p95/p99/max frame ms,
+GC count/time deltas, process-available MSPT and hook evidence. The result screen wraps and scrolls.
+Runtime A/B settings are not persisted.
 
-Opening any screen cancels the capture so menu frames cannot contaminate the
-result. G also cancels. The warning for a scene with no belt-item shadow calls
-is wrapped to the result panel instead of overflowing the screen.
+A target may have **no opportunity**: no transported calls, no supported visuals, particles already
+disabled, or Potato already making animation groups static. Other settings remain unchanged.
+Compare counters before interpreting FPS noise; this is not a promise of performance gain.
+Five seconds is a smoke comparison, not a statistically significant performance claim.
+Repeat in reversed order in separately warmed runs to control thermal/JIT/cache/scene drift.
 
-## Repeatable scenes
+## Conditions and scenes
 
-A: 100 rotating components. B: 1000 rotating components. C: dense kinetic
-visuals. D: long belts. E: belts with many transported items. F: large static
-factory. G: moving contraption. H: pipes/tanks. I: particle-heavy factory. J:
-same with shaders. K: factory outside the camera. L: factory behind walls.
+Fix camera position/direction, resolution, GUI/render distance, shaders, versions, factory state
+and logging mode. Warm JVM, chunks and resources. Avoid world edits during captures.
+Test 100/1000 rotating parts; dense factory; long empty/loaded belts; moving large contraption;
+pipes/tanks; particle-heavy pulleys/burners; shaders; factory behind player; factory behind a wall.
+Measure chunk/dimension transitions separately from steady-state frame cost.
 
-Each comparison must keep position, view direction, resolution, render distance,
-shader pack and scene state fixed. JVM, chunks, resources and shaders must be
-warmed before recording. No runtime benchmark has been performed merely by
-building this project.
+PC synthetic benchmark runs time-budgeted CPU work slices and is not a Create GPU benchmark.
+Its hardware recommendation is a starting point, not a measured factory gain.
+No factory FPS results are claimed by compilation or startup.

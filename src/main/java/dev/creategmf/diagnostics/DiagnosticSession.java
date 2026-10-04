@@ -26,6 +26,8 @@ public final class DiagnosticSession {
     private long durationNanos;
     private MemorySnapshot memoryBefore = MemorySnapshot.EMPTY;
     private DiagnosticsResult result;
+    private RenderEvidence renderStart;
+    private net.minecraft.client.multiplayer.ClientLevel level;
 
     private DiagnosticSession() {
     }
@@ -36,6 +38,7 @@ public final class DiagnosticSession {
         startedNanos = System.nanoTime();
         result = null;
         state = State.PREPARING;
+        level = net.minecraft.client.Minecraft.getInstance().level;
     }
 
     public void cancel() {
@@ -52,10 +55,12 @@ public final class DiagnosticSession {
     }
 
     public void tick() {
+        if (isActive() && net.minecraft.client.Minecraft.getInstance().level != level) { cancel(); return; }
         long elapsed = System.nanoTime() - startedNanos;
         if (state == State.PREPARING && elapsed >= PREPARATION_NANOS) {
             MemoryMetricsCollector.INSTANCE.sample();
             memoryBefore = MemoryMetricsCollector.INSTANCE.snapshot();
+            renderStart = RenderEvidence.capture();
             frameSamples.clear();
             startedNanos = System.nanoTime();
             state = State.RUNNING;
@@ -75,7 +80,8 @@ public final class DiagnosticSession {
         SceneCensus scene = CreateSceneScanner.captureNearby();
         Classification classification = classify(frames, mspt, memoryBefore, memoryAfter, scene);
         result = new DiagnosticsResult(frames, mspt, memoryBefore, memoryAfter, scene,
-                classification.type, classification.evidence, classification.confidence, classification.reasonKey);
+                classification.type, classification.evidence, classification.confidence, classification.reasonKey,
+                RenderEvidence.capture().since(renderStart));
         state = State.COMPLETE;
     }
 

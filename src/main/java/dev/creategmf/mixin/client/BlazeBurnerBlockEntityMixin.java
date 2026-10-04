@@ -16,7 +16,8 @@ public abstract class BlazeBurnerBlockEntityMixin {
     private void createGmf$limitAmbientParticles(BlazeBurnerBlock.HeatLevel heatLevel, double burstMultiplier,
             CallbackInfo ci) {
         BlazeBurnerBlockEntity burner = (BlazeBurnerBlockEntity) (Object) this;
-        if (!CreateParticleOptimizer.shouldCreateVanillaEffect(burner.getBlockPos(), burner.getClass().getName())) {
+        if (burner.getLevel() != null && burner.getLevel().isClientSide
+                && !CreateParticleOptimizer.shouldCreateVanillaEffect(burner.getBlockPos(), burner.getClass().getName())) {
             ci.cancel();
         }
     }
@@ -24,7 +25,8 @@ public abstract class BlazeBurnerBlockEntityMixin {
     @Inject(method = "spawnParticleBurst", at = @At("HEAD"), cancellable = true, require = 0)
     private void createGmf$limitParticleBurst(boolean soulFlame, CallbackInfo ci) {
         BlazeBurnerBlockEntity burner = (BlazeBurnerBlockEntity) (Object) this;
-        if (!CreateParticleOptimizer.shouldCreateVanillaEffect(burner.getBlockPos(), burner.getClass().getName())) {
+        if (burner.getLevel() != null && burner.getLevel().isClientSide
+                && !CreateParticleOptimizer.shouldCreateVanillaEffect(burner.getBlockPos(), burner.getClass().getName())) {
             ci.cancel();
         }
     }

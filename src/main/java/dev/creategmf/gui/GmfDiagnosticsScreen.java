@@ -33,8 +33,8 @@ public final class GmfDiagnosticsScreen extends GmfScreen {
                     updateButtons();
                 }).bounds(x, 112, 220, 20).build());
         settingsButton = addRenderableWidget(Button.builder(
-                        Component.translatable("gui.create_gmf.open_mechanism_settings"), button ->
-                                minecraft.setScreen(new GmfSettingsScreen(this)))
+                        Component.translatable("gui.create_gmf.recommended_optimization"), button ->
+                                minecraft.setScreen(new GmfRecommendationScreen(this, DiagnosticSession.INSTANCE.result())))
                 .bounds(x, height - 52, 220, 20).build());
         addBackButton();
         updateButtons();

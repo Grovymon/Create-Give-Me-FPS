@@ -1,4 +1,7 @@
-# GMF 0.1 implementation plan
+# Historical MVP implementation plan
+
+This file records the original plan, not a current release number or feature contract.
+For current behavior and validation see [AUDIT_REPORT](AUDIT_REPORT.md) and [ARCHITECTURE](ARCHITECTURE.md).
 
 1. Establish the verified dependency matrix and source-backed analysis.
 2. Ship localized, persistent settings and safe client/server event boundaries.

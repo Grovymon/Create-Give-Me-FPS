@@ -9,6 +9,13 @@ public record OptimizationBenchmarkResult(
         double beforeMspt,
         double afterMspt,
         BeltShadowCounters beforeCounters,
-        BeltShadowCounters afterCounters
+        BeltShadowCounters afterCounters,
+        OptimizationTarget target,
+        dev.creategmf.diagnostics.RenderEvidence beforeEvidence,
+        dev.creategmf.diagnostics.RenderEvidence afterEvidence,
+        long beforeGcCount,
+        long afterGcCount,
+        long beforeGcMs,
+        long afterGcMs
 ) {
 }

@@ -2,195 +2,142 @@ package dev.creategmf.optimization.occlusion;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
-
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 import dev.creategmf.config.GmfConfig;
+import dev.creategmf.integration.CreateVisualClassifier;
 import dev.creategmf.integration.ModCompatibilityDetector;
-import dev.engine_room.flywheel.api.visualization.VisualManager;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.visualization.VisualizationHelper;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
- * Client-only visual hand-off adapted from Create: Nowheel.
- *
- * <p>Copyright (c) 2026 Lap2ka, MIT License. See
- * {@code META-INF/THIRD_PARTY_NOTICES.md} in the distributed JAR.</p>
- *
- * <p>Entity Culling decides whether an object is hidden. GMF only mirrors the
- * resulting transition into Flywheel's block-entity visual queue; it never
- * raycasts, changes a kinetic network, or changes a block entity tick.</p>
+ * Client hand-off adapted from Create: Nowheel, Copyright (c) 2026 Lap2ka (MIT).
+ * EC worker callbacks only publish observations; client thread owns queues and cleanup.
+ * Unknown visibility is visible. Never changes world/kinetic/server state.
  */
 public final class CreateOcclusionController {
-    private static final Map<BlockEntity, Boolean> TRACKED_CULLED = new IdentityHashMap<>();
+    private static final Map<BlockEntity, HiddenVisualState> TRACKED = new IdentityHashMap<>();
+    private static final Set<BlockEntity> PENDING = ConcurrentHashMap.newKeySet();
+    private static final Set<BlockEntity> REJECTED = ConcurrentHashMap.newKeySet();
+    private static final Set<BlockEntity> FORGOTTEN = ConcurrentHashMap.newKeySet();
+    private static final LongAdder creationSkips = new LongAdder();
     private static ClientLevel activeLevel;
-    private static int visible;
-    private static int occluded;
-    private static long visualRemovals;
-    private static long visualRestores;
-    private static long stateChanges;
-    private static long creationSkips;
-
-    private CreateOcclusionController() {
-    }
-
-    /** Returns true only when this mod, not Nowheel, owns the visual queue. */
+    private static VisualizationManager activeManager;
+    private static boolean wasActive;
+    private static long removals, restores, changes;
+    private static int visible, hidden, sweepTicks;
+    private CreateOcclusionController() {}
     public static boolean isActive() {
-        return GmfConfig.SPEC.isLoaded()
-                && GmfConfig.CLIENT.enabled.get()
-                && GmfConfig.CLIENT.createOcclusionCulling.get()
-                && EntityCullingBridge.isAvailable()
+        return GmfConfig.SPEC.isLoaded() && GmfConfig.CLIENT.enabled.get()
+                && GmfConfig.CLIENT.createOcclusionCulling.get() && EntityCullingBridge.isAvailable()
                 && !ModCompatibilityDetector.hasNowheel();
     }
-
-    public static boolean shouldRejectVisualCreation(BlockEntity blockEntity) {
-        if (!isActive() || !isCreateBlockEntity(blockEntity) || !EntityCullingBridge.isCulled(blockEntity)) {
-            return false;
-        }
-        track(blockEntity, true);
-        creationSkips++;
+    public static boolean shouldRejectVisualCreation(BlockEntity be) {
+        return shouldRejectVisualCreation(be, true);
+    }
+    public static boolean shouldRejectVisualCreation(BlockEntity be, boolean absent) {
+        if (!isActive() || !compatible(be) || !EntityCullingBridge.isCulled(be)) return false;
+        if (absent) REJECTED.add(be);
+        PENDING.add(be); creationSkips.increment();
         return true;
     }
-
-    /**
-     * Makes Flywheel-only Create visuals visible to Entity Culling's scan.
-     *
-     * <p>Many Create block entities intentionally have no vanilla
-     * {@code BlockEntityRenderer}: Flywheel owns their visual entirely. Entity
-     * Culling normally skips such objects before it can set their cull state.
-     * The optional CullTask mixin supplies a no-op renderer only for this
-     * visibility test; it never renders a second copy of the mechanism.</p>
-     */
-    public static boolean shouldExposeToEntityCulling(BlockEntity blockEntity) {
-        return isActive() && isCreateBlockEntity(blockEntity);
+    public static boolean shouldExposeToEntityCulling(BlockEntity be) { return isActive() && compatible(be); }
+    public static void onCullChanged(BlockEntity be, boolean ignoredWorkerValue) {
+        if (isActive() && compatible(be)) PENDING.add(be);
     }
-
-    /** Called only by Entity Culling's own state transition hook. */
-    public static void onCullChanged(BlockEntity blockEntity, boolean nowCulled) {
-        if (!isActive() || !isCreateBlockEntity(blockEntity)) return;
-        Boolean previous = TRACKED_CULLED.get(blockEntity);
-        boolean changed = track(blockEntity, nowCulled);
-        if (!changed) return;
-        // The first visible observation only establishes state. Queueing an add
-        // for every currently loaded mechanism would duplicate Flywheel work.
-        if (previous == null && !nowCulled) return;
-        VisualManager<BlockEntity> visuals = visualManager(blockEntity.getLevel());
-        if (visuals == null) return;
-        if (nowCulled) {
-            visuals.queueRemove(blockEntity);
-            visualRemovals++;
-        } else {
-            visuals.queueAdd(blockEntity);
-            visualRestores++;
-        }
+    public static void forget(BlockEntity be) {
+        if (be.getLevel() != null && be.getLevel().isClientSide) FORGOTTEN.add(be);
     }
-
-    public static void forget(BlockEntity blockEntity) {
-        Boolean previous = TRACKED_CULLED.remove(blockEntity);
-        if (previous == null) return;
-        if (previous) occluded = Math.max(0, occluded - 1);
-        else visible = Math.max(0, visible - 1);
-    }
-
-    /** Restores any hidden visuals before backend replacement or disabling. */
-    public static void clearForRendererChange() {
-        restoreTrackedVisuals();
-    }
-
+    public static void clearForRendererChange() { restoreTrackedVisuals(); activeManager = null; }
     public static void onConfigurationChanged() {
-        if (!isActive()) {
-            restoreTrackedVisuals();
-        } else {
-            refreshLoadedCreateBlockEntities();
-        }
+        if (!isActive()) restoreTrackedVisuals(); else seedLoaded();
     }
-
     public static void onClientTick() {
         ClientLevel current = Minecraft.getInstance().level;
-        if (current == activeLevel) return;
-        // A previous level's manager may already be gone at this point. Do not
-        // issue queue calls into it; merely discard references on world change.
-        TRACKED_CULLED.clear();
-        visible = 0;
-        occluded = 0;
-        activeLevel = current;
+        if (current != activeLevel) {
+            TRACKED.clear(); activeLevel = current; activeManager = null; wasActive = false;
+            visible = hidden = 0;
+            PENDING.removeIf(be -> be.getLevel() != current);
+            REJECTED.removeIf(be -> be.getLevel() != current);
+            FORGOTTEN.clear();
+        }
+        VisualizationManager manager = current == null ? null : VisualizationManager.get(current);
+        if (manager != activeManager) {
+            // A disposed manager must not receive restoration commands.
+            TRACKED.clear(); visible = hidden = 0; activeManager = manager;
+            if (manager != null && isActive()) seedLoaded();
+        }
+        boolean active = isActive();
+        if (!active && wasActive) restoreTrackedVisuals();
+        if (active && !wasActive) seedLoaded();
+        wasActive = active;
+        for (BlockEntity be : FORGOTTEN) {
+            TRACKED.remove(be); PENDING.remove(be); REJECTED.remove(be); FORGOTTEN.remove(be);
+        }
+        TRACKED.keySet().removeIf(be -> be.isRemoved() || be.getLevel() != activeLevel);
+        if (manager == null) return;
+        int budget = 1024;
+        for (BlockEntity be : PENDING) {
+            if (--budget < 0) break;
+            PENDING.remove(be);
+            if (be.isRemoved() || be.getLevel() != activeLevel) { REJECTED.remove(be); continue; }
+            HiddenVisualState state = TRACKED.computeIfAbsent(be, ignored -> new HiddenVisualState());
+            if (REJECTED.remove(be)) state.creationRejected();
+            apply(be, state, active, EntityCullingBridge.isCulled(be));
+        }
+        // Forced-visible timeouts need not invoke setCulled. Reconcile ownership at 5 Hz.
+        if (++sweepTicks >= 4) {
+            sweepTicks = 0;
+            TRACKED.forEach((be, state) -> apply(be, state, active, EntityCullingBridge.isCulled(be)));
+        }
+        visible = hidden = 0;
+        for (HiddenVisualState state : TRACKED.values()) {
+            if (state.owesRestore()) hidden++; else visible++;
+        }
     }
-
+    private static void apply(BlockEntity be, HiddenVisualState state, boolean active, boolean culled) {
+        if (activeManager == null || be.isRemoved() || be.getLevel() != activeLevel) return;
+        switch (state.transition(active, culled)) {
+            case REMOVE -> { activeManager.blockEntities().queueRemove(be); removals++; changes++; }
+            case ADD -> { activeManager.blockEntities().queueAdd(be); restores++; changes++; }
+            case NONE -> {}
+        }
+    }
+    private static void restoreTrackedVisuals() {
+        if (activeManager == null) return; // Keep restoration debt until a queue is available.
+        TRACKED.forEach((be, state) -> apply(be, state, false, false));
+        for (BlockEntity be : REJECTED) {
+            if (be.getLevel() == activeLevel && !be.isRemoved() && !TRACKED.containsKey(be)) {
+                activeManager.blockEntities().queueAdd(be); restores++;
+            }
+        }
+        TRACKED.clear(); REJECTED.clear(); PENDING.clear(); visible = hidden = 0;
+    }
+    private static void seedLoaded() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) return;
+        int radius = mc.options.getEffectiveRenderDistance();
+        int cx = mc.player.chunkPosition().x, cz = mc.player.chunkPosition().z;
+        for (int x = cx - radius; x <= cx + radius; x++) for (int z = cz - radius; z <= cz + radius; z++) {
+            if (!mc.level.hasChunk(x, z)) continue;
+            for (BlockEntity be : mc.level.getChunk(x, z).getBlockEntities().values()) if (compatible(be)) PENDING.add(be);
+        }
+    }
+    private static boolean compatible(BlockEntity be) {
+        return be != null && be.getLevel() != null && be.getLevel().isClientSide
+                && CreateVisualClassifier.classify(be).supported() && VisualizationHelper.canVisualize(be);
+    }
     public static Snapshot snapshot() {
         String provider = ModCompatibilityDetector.hasNowheel() ? "nowheel"
                 : EntityCullingBridge.isAvailable() ? "entityculling" : "none";
-        return new Snapshot(isActive(), EntityCullingBridge.isAvailable(), ModCompatibilityDetector.hasNowheel(), provider,
-                TRACKED_CULLED.size(), visible, occluded, visualRemovals, visualRestores, stateChanges, creationSkips);
+        return new Snapshot(isActive(), EntityCullingBridge.isAvailable(), ModCompatibilityDetector.hasNowheel(),
+                provider, TRACKED.size(), visible, hidden, removals, restores, changes, creationSkips.sum());
     }
-
-    private static boolean track(BlockEntity blockEntity, boolean nowCulled) {
-        Boolean old = TRACKED_CULLED.put(blockEntity, nowCulled);
-        if (old == null) {
-            if (nowCulled) occluded++;
-            else visible++;
-            return true;
-        }
-        if (old == nowCulled) return false;
-        if (nowCulled) {
-            visible = Math.max(0, visible - 1);
-            occluded++;
-        } else {
-            occluded = Math.max(0, occluded - 1);
-            visible++;
-        }
-        stateChanges++;
-        return true;
-    }
-
-    private static void restoreTrackedVisuals() {
-        for (Map.Entry<BlockEntity, Boolean> entry : TRACKED_CULLED.entrySet()) {
-            if (!entry.getValue()) continue;
-            VisualManager<BlockEntity> visuals = visualManager(entry.getKey().getLevel());
-            if (visuals != null) {
-                visuals.queueAdd(entry.getKey());
-                visualRestores++;
-            }
-        }
-        TRACKED_CULLED.clear();
-        visible = 0;
-        occluded = 0;
-    }
-
-    private static void refreshLoadedCreateBlockEntities() {
-        Minecraft minecraft = Minecraft.getInstance();
-        ClientLevel level = minecraft.level;
-        if (level == null || minecraft.player == null) return;
-        int radius = Math.max(2, minecraft.options.getEffectiveRenderDistance());
-        int centerX = minecraft.player.chunkPosition().x;
-        int centerZ = minecraft.player.chunkPosition().z;
-        for (int x = centerX - radius; x <= centerX + radius; x++) {
-            for (int z = centerZ - radius; z <= centerZ + radius; z++) {
-                if (!level.hasChunk(x, z)) continue;
-                for (BlockEntity blockEntity : level.getChunk(x, z).getBlockEntities().values()) {
-                    if (!isCreateBlockEntity(blockEntity)) continue;
-                    onCullChanged(blockEntity, EntityCullingBridge.isCulled(blockEntity));
-                }
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static VisualManager<BlockEntity> visualManager(Level level) {
-        if (level == null) return null;
-        VisualizationManager manager = VisualizationManager.get(level);
-        return manager == null ? null : (VisualManager<BlockEntity>) manager.blockEntities();
-    }
-
-    private static boolean isCreateBlockEntity(BlockEntity blockEntity) {
-        return blockEntity != null && blockEntity.getClass().getName().startsWith("com.simibubi.create.")
-                && VisualizationHelper.canVisualize(blockEntity);
-    }
-
     public record Snapshot(boolean active, boolean entityCullingAvailable, boolean nowheelDetected, String provider,
             int tracked, int visible, int occluded, long visualRemovals, long visualRestores, long stateChanges,
-            long creationSkips) {
-    }
+            long creationSkips) {}
 }

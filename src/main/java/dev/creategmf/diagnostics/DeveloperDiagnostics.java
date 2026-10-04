@@ -360,7 +360,7 @@ public final class DeveloperDiagnostics {
                 particles.sparks(), particles.itemBreak(), particles.fluidSplash(), particles.directFluidEffectsSuppressed(),
                 occlusion.active(), occlusion.entityCullingAvailable(), occlusion.nowheelDetected(), occlusion.provider(),
                 occlusion.tracked(), occlusion.visible(), occlusion.occluded(), occlusion.visualRemovals(),
-                occlusion.visualRestores(), occlusion.stateChanges(), occlusion.creationSkips());
+                occlusion.visualRestores(), occlusion.stateChanges(), occlusion.creationSkips(), RenderEvidence.capture());
     }
 
     private void writeSessionFiles(Path session, String sessionLog, String sessionJson, String mods) {
@@ -435,6 +435,7 @@ public final class DeveloperDiagnostics {
     private String eventLog(PendingCapture capture, List<Sample> samples, RuntimeState state) {
         SceneCensus scene = capture.sceneAtTrigger();
         StringBuilder result = new StringBuilder();
+        result.append("Render counters (MEASURED counts, timing UNAVAILABLE): ").append(state.render()).append('\n');
         result.append("GMF event: ").append(capture.type()).append('\n');
         result.append("automatic=").append(capture.automatic()).append('\n');
         result.append("trigger_frame_ms=").append(ms(capture.triggerFrameNanos())).append('\n');
@@ -480,6 +481,7 @@ public final class DeveloperDiagnostics {
 
     private String eventJson(PendingCapture capture, List<Sample> samples, RuntimeState state) {
         StringBuilder result = new StringBuilder("{\n");
+        result.append("  \"renderEvidence\": ").append(renderEvidenceJson(state.render())).append(",\n");
         result.append("  \"event\": \"").append(json(capture.type())).append("\",\n");
         result.append("  \"automatic\": ").append(capture.automatic()).append(",\n");
         result.append("  \"triggerFrameMs\": ").append(ms(capture.triggerFrameNanos())).append(",\n");
@@ -628,7 +630,19 @@ public final class DeveloperDiagnostics {
             long steamSmoke, long sparks, long itemBreak, long fluidSplash, long directFluidEffectsSuppressed,
             boolean occlusionActive, boolean entityCullingAvailable, boolean nowheelDetected, String occlusionProvider,
             int occlusionTracked, int occlusionVisible, int occlusionOccluded, long occlusionVisualRemovals,
-            long occlusionVisualRestores, long occlusionStateChanges, long occlusionCreationSkips) {
+            long occlusionVisualRestores, long occlusionStateChanges, long occlusionCreationSkips, RenderEvidence render) {
+    }
+
+    private static String renderEvidenceJson(RenderEvidence evidence) {
+        return "{\"status\":\"MEASURED_COUNTS\",\"timing\":\"UNAVAILABLE\",\"visibleCreateVisuals\":"
+                + evidence.population().visible() + ",\"offScreenCreateVisuals\":" + evidence.population().offScreen()
+                + ",\"addonVisuals\":" + evidence.population().addons() + ",\"occludedVisuals\":" + evidence.occluded()
+                + ",\"allFlywheelBlockEntityVisuals\":" + evidence.allFlywheelBlockEntityVisuals()
+                + ",\"skippedAnimationUpdates\":" + evidence.animation().skippedUpdates()
+                + ",\"restoredAnimationUpdates\":" + evidence.animation().restoredUpdates()
+                + ",\"transportedRenderCalls\":" + evidence.transportedAttempts()
+                + ",\"transportedRenderCallsSkipped\":" + evidence.transportedSkipped()
+                + ",\"particlesSuppressed\":" + evidence.particlesSuppressed() + "}";
     }
 
     private record Sample(long timeNanos, long frameNanos, long baselineNanos, long particleRequests,

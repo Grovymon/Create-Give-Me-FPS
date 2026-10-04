@@ -18,6 +18,9 @@ import net.neoforged.neoforge.client.event.RenderFrameEvent;
 
 public final class ClientRuntime {
     private static int memorySampleTicks;
+    private static dev.creategmf.recommendation.AdaptiveRecommendationGate adaptive =
+            new dev.creategmf.recommendation.AdaptiveRecommendationGate();
+    private static net.minecraft.client.multiplayer.ClientLevel adaptiveLevel;
 
     private ClientRuntime() {
     }
@@ -33,6 +36,11 @@ public final class ClientRuntime {
 
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
+        while (ClientKeyMappings.TOGGLE_PERFORMANCE.consumeClick()) {
+            if (minecraft.level != null && !OptimizationBenchmarkSession.INSTANCE.isActive())
+                PerformanceModeToggle.toggle();
+        }
+        if (minecraft.level == null) PerformanceModeToggle.restoreOnDisconnect();
         while (ClientKeyMappings.OPEN_MENU.consumeClick()) {
             if (DiagnosticSession.INSTANCE.isActive()) {
                 DiagnosticSession.INSTANCE.cancel();
@@ -48,6 +56,19 @@ public final class ClientRuntime {
         if (++memorySampleTicks >= 20) {
             memorySampleTicks = 0;
             MemoryMetricsCollector.INSTANCE.sample();
+            if (minecraft.level != adaptiveLevel || !dev.creategmf.config.GmfConfig.CLIENT.adaptiveRecommendations.get()) {
+                adaptiveLevel = minecraft.level;
+                adaptive = new dev.creategmf.recommendation.AdaptiveRecommendationGate();
+            } else if (minecraft.player != null && minecraft.screen == null
+                    && !OptimizationBenchmarkSession.INSTANCE.isActive() && !DiagnosticSession.INSTANCE.isActive()) {
+                var proposal = adaptive.observe(FrameTimeCollector.INSTANCE.snapshot().averageFps(),
+                        dev.creategmf.config.GmfConfig.CLIENT.targetFps.get(), System.nanoTime() / 1_000_000_000L);
+                if (proposal != dev.creategmf.recommendation.AdaptiveRecommendationGate.Proposal.NONE) {
+                    minecraft.player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                            proposal == dev.creategmf.recommendation.AdaptiveRecommendationGate.Proposal.LOWER_QUALITY
+                                    ? "gui.create_gmf.adaptive.lower" : "gui.create_gmf.adaptive.restore"), false);
+                }
+            }
         }
         DistantAnimationController.tick();
         CreateOcclusionController.onClientTick();

@@ -11,9 +11,11 @@ public record FrameStatistics(
         double varianceMillisecondsSquared,
         double averageFps,
         double onePercentLow,
-        double pointOnePercentLow
+        double pointOnePercentLow,
+        double p95Milliseconds,
+        double p99Milliseconds
 ) {
-    public static final FrameStatistics EMPTY = new FrameStatistics(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static final FrameStatistics EMPTY = new FrameStatistics(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     private static final double NANOS_PER_MILLI = 1_000_000.0;
 
     public static FrameStatistics fromNanos(long[] nanos) {
@@ -54,7 +56,9 @@ public record FrameStatistics(
                 varianceNanos / (NANOS_PER_MILLI * NANOS_PER_MILLI),
                 fpsFromNanos(averageNanos),
                 oneLow,
-                pointOneLow
+                pointOneLow,
+                sorted[Math.max(0, (int) Math.ceil(sorted.length * .95) - 1)] / NANOS_PER_MILLI,
+                sorted[Math.max(0, (int) Math.ceil(sorted.length * .99) - 1)] / NANOS_PER_MILLI
         );
     }
 

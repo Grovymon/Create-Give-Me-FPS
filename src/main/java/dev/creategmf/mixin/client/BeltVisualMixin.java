@@ -20,6 +20,15 @@ public abstract class BeltVisualMixin {
     private void createGmf$freezeDistantBelt(ScrollInstance instance, boolean bottom, SpriteShiftEntry spriteShift,
             CallbackInfoReturnable<ScrollInstance> cir) {
         ScrollAnimationRegistry.prepare(instance,
-                ((BlockEntityVisualAccess) this).createGmf$getWorldPosition(), MechanismAnimationGroup.BELTS);
+                ((BlockEntityVisualAccess) this).createGmf$getAnimationState());
+    }
+
+    @Inject(method = "setup", at = @At(value = "INVOKE",
+            target = "Ldev/engine_room/flywheel/lib/instance/ColoredLitInstance;setChanged()V"),
+            require = 1)
+    private void createGmf$captureBeltSource(ScrollInstance instance, boolean bottom, SpriteShiftEntry spriteShift,
+            CallbackInfoReturnable<ScrollInstance> cir) {
+        // Setter hooks have captured canonical arguments; this is the verified final upload boundary.
+        ScrollAnimationRegistry.beforeUpload(instance);
     }
 }

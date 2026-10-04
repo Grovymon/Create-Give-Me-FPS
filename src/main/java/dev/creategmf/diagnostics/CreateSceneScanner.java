@@ -45,7 +45,7 @@ public final class CreateSceneScanner {
                 }
                 chunks++;
                 for (BlockEntity blockEntity : level.getChunk(x, z).getBlockEntities().values()) {
-                    if (blockEntity.getClass().getName().startsWith("com.simibubi.create.")) {
+                    if (dev.creategmf.integration.CreateVisualClassifier.classify(blockEntity).supported()) {
                         createBlockEntities++;
                         MechanismAnimationGroup group = MechanismAnimationGroup
                                 .fromClassName(blockEntity.getClass().getName());

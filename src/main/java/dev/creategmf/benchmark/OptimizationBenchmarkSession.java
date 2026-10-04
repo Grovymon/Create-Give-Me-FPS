@@ -29,23 +29,42 @@ public final class OptimizationBenchmarkSession {
     private ServerTickCollector.Totals tickStart;
     private double beforeMspt;
     private OptimizationBenchmarkResult result;
+    private OptimizationTarget target = OptimizationTarget.BELT_SHADOWS;
+    private dev.creategmf.config.VisualConfigSnapshot previous;
+    private dev.creategmf.diagnostics.RenderEvidence evidenceStart, beforeEvidence;
+    private dev.creategmf.profiler.MemorySnapshot memoryStart, beforeMemory;
+    private net.minecraft.client.multiplayer.ClientLevel level;
+    private dev.creategmf.config.CreateParticleMode particleMode;
+    private dev.creategmf.config.DistantAnimationMode distantMode;
 
     private OptimizationBenchmarkSession() {
     }
 
     public void start() {
+        start(OptimizationTarget.BELT_SHADOWS);
+    }
+    public boolean start(OptimizationTarget chosen) {
+        if (!chosen.runtimeSafe() || net.minecraft.client.Minecraft.getInstance().level == null) return false;
+        cancel();
+        target = chosen;
+        level = net.minecraft.client.Minecraft.getInstance().level;
+        previous = dev.creategmf.config.VisualConfigSnapshot.capture();
+        particleMode = dev.creategmf.config.GmfConfig.CLIENT.createParticleMode.get();
+        distantMode = dev.creategmf.config.GmfConfig.CLIENT.distantAnimationMode.get();
         beforeFrames.clear();
         afterFrames.clear();
         result = null;
         counterStart = BeltShadowOptimizer.counters();
         tickStart = ServerTickCollector.totals();
-        BeltShadowOptimizer.forceEnabled(false);
+        try { phase(false); beginEvidence(); }
+        catch (RuntimeException error) { cancel(); throw error; }
         phaseStart = System.nanoTime();
         state = State.BEFORE;
+        return true;
     }
 
     public void cancel() {
-        BeltShadowOptimizer.forceEnabled(null);
+        restore();
         state = State.IDLE;
     }
 
@@ -61,30 +80,94 @@ public final class OptimizationBenchmarkSession {
     }
 
     public void tick() {
+        try { advance(); }
+        catch (RuntimeException error) { cancel(); dev.creategmf.CreateGmf.LOGGER.warn("GMF A/B cancelled safely", error); }
+    }
+    private void advance() {
+        if (!isActive()) return;
+        if (net.minecraft.client.Minecraft.getInstance().level != level) { cancel(); return; }
         long elapsed = System.nanoTime() - phaseStart;
         if (state == State.BEFORE && elapsed >= PHASE_NANOS) {
             beforeCounters = BeltShadowOptimizer.counters().subtract(counterStart);
             beforeMspt = ServerTickCollector.averageBetween(tickStart, ServerTickCollector.totals());
-            BeltShadowOptimizer.forceEnabled(true);
+            dev.creategmf.profiler.MemoryMetricsCollector.INSTANCE.sample();
+            beforeMemory = dev.creategmf.profiler.MemoryMetricsCollector.INSTANCE.snapshot();
+            beforeEvidence = dev.creategmf.diagnostics.RenderEvidence.capture().since(evidenceStart);
+            phase(true);
             phaseStart = System.nanoTime();
             state = State.TRANSITION;
         } else if (state == State.TRANSITION && elapsed >= TRANSITION_NANOS) {
             counterStart = BeltShadowOptimizer.counters();
             tickStart = ServerTickCollector.totals();
+            beginEvidence();
             phaseStart = System.nanoTime();
             state = State.AFTER;
         } else if (state == State.AFTER && elapsed >= PHASE_NANOS) {
             BeltShadowCounters afterCounters = BeltShadowOptimizer.counters().subtract(counterStart);
             double afterMspt = ServerTickCollector.averageBetween(tickStart, ServerTickCollector.totals());
-            BeltShadowOptimizer.forceEnabled(null);
+            dev.creategmf.profiler.MemoryMetricsCollector.INSTANCE.sample();
+            var afterMemory = dev.creategmf.profiler.MemoryMetricsCollector.INSTANCE.snapshot();
+            var afterEvidence = dev.creategmf.diagnostics.RenderEvidence.capture().since(evidenceStart);
             result = new OptimizationBenchmarkResult(
                     FrameStatistics.fromNanos(beforeFrames.snapshot()),
                     FrameStatistics.fromNanos(afterFrames.snapshot()),
                     beforeMspt,
                     afterMspt,
                     beforeCounters,
-                    afterCounters);
+                    afterCounters, target, beforeEvidence, afterEvidence,
+                    Math.max(0, beforeMemory.gcCount() - beforeGcStart),
+                    Math.max(0, afterMemory.gcCount() - memoryStart.gcCount()),
+                    Math.max(0, beforeMemory.gcCollectionMilliseconds() - beforeGcMsStart),
+                    Math.max(0, afterMemory.gcCollectionMilliseconds() - memoryStart.gcCollectionMilliseconds()));
+            restore();
             state = State.COMPLETE;
+        }
+    }
+    private long beforeGcStart, beforeGcMsStart;
+    private void beginEvidence() {
+        evidenceStart = dev.creategmf.diagnostics.RenderEvidence.capture();
+        dev.creategmf.profiler.MemoryMetricsCollector.INSTANCE.sample();
+        memoryStart = dev.creategmf.profiler.MemoryMetricsCollector.INSTANCE.snapshot();
+        if (state == State.IDLE) {
+            beforeGcStart = memoryStart.gcCount();
+            beforeGcMsStart = memoryStart.gcCollectionMilliseconds();
+        }
+    }
+    private void phase(boolean optimized) {
+        var c = dev.creategmf.config.GmfConfig.CLIENT;
+        // Restore all unrelated settings between phases, then modify ONLY the selected visual feature.
+        previous.restore();
+        c.enabled.set(true);
+        switch (target) {
+            case BELT_SHADOWS -> BeltShadowOptimizer.forceEnabled(optimized);
+            case OCCLUSION -> c.createOcclusionCulling.set(optimized);
+            case OFFSCREEN -> c.pauseOffScreenAnimations.set(optimized);
+            case DISTANT -> {
+                if (!optimized && c.distantAnimationDistance.get() <= 0) c.distantAnimationDistance.set(32.0);
+                c.distantAnimationMode.set(!optimized ? dev.creategmf.config.DistantAnimationMode.FULL
+                        : distantMode == dev.creategmf.config.DistantAnimationMode.FULL
+                        ? dev.creategmf.config.DistantAnimationMode.REDUCED : distantMode);
+            }
+            case TRANSPORTED_ITEMS -> c.renderTransportedBeltItems.set(!optimized);
+            case PARTICLES -> {
+                c.createParticleMode.set(!optimized ? dev.creategmf.config.CreateParticleMode.FULL
+                        : particleMode == dev.creategmf.config.CreateParticleMode.FULL
+                        ? dev.creategmf.config.CreateParticleMode.REDUCED : particleMode);
+                if (!optimized) {
+                    c.renderSteamSmokeParticles.set(true); c.renderSparkParticles.set(true);
+                    c.renderItemBreakParticles.set(true); c.renderWaterSplashParticles.set(true);
+                }
+            }
+            default -> throw new IllegalStateException("Restart-required targets cannot run live");
+        }
+        dev.creategmf.optimization.occlusion.CreateOcclusionController.onConfigurationChanged();
+    }
+    private void restore() {
+        BeltShadowOptimizer.forceEnabled(null);
+        if (previous != null) {
+            previous.restore();
+            previous = null;
+            dev.creategmf.optimization.occlusion.CreateOcclusionController.onConfigurationChanged();
         }
     }
 

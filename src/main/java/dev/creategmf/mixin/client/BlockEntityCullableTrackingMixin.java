@@ -18,19 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @SuppressWarnings({"MixinAnnotationTarget", "UnresolvedMixinReference"})
 @Mixin(value = BlockEntity.class, priority = 1090)
 public abstract class BlockEntityCullableTrackingMixin {
-    @Unique private boolean createGmf$transitionPending;
-    @Unique private boolean createGmf$transitionValue;
-
-    @Inject(method = "setCulled(Z)V", at = @At("HEAD"), remap = false, require = 0)
-    private void createGmf$captureCullTransition(boolean value, CallbackInfo ci) {
-        createGmf$transitionPending = true;
-        createGmf$transitionValue = value;
-    }
-
     @Inject(method = "setCulled(Z)V", at = @At("TAIL"), remap = false, require = 0)
     private void createGmf$applyCullTransition(boolean value, CallbackInfo ci) {
-        if (!createGmf$transitionPending || createGmf$transitionValue != value) return;
-        createGmf$transitionPending = false;
         CreateOcclusionController.onCullChanged((BlockEntity) (Object) this, value);
     }
 

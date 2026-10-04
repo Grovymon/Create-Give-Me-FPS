@@ -12,6 +12,7 @@ public record DiagnosticsResult(
         BottleneckType primaryBottleneck,
         EvidenceStatus evidence,
         Confidence confidence,
-        String reasonTranslationKey
+        String reasonTranslationKey,
+        RenderEvidence render
 ) {
 }

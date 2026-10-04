@@ -30,7 +30,7 @@ public abstract class ShadedBlockSbbBuilderMixin {
 
     @Inject(method = "end", at = @At(value = "HEAD"), cancellable = true, require = 0)
     public void onEnd(CallbackInfoReturnable<SuperByteBuffer> cir) {
-        if (!GmfConfig.CLIENT.acceleratedRenderer.get()) return;
+        if (!dev.creategmf.client.RendererRestartTracker.acceleratedAtLaunch()) return;
         MeshData data = bufferBuilder.build();
         TemplateMesh mesh;
 

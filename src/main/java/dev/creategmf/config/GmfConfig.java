@@ -5,7 +5,7 @@ import java.util.EnumMap;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class GmfConfig {
-    public static final int CURRENT_VERSION = 12;
+    public static final int CURRENT_VERSION = 13;
     public static final ClientValues CLIENT;
     public static final ModConfigSpec SPEC;
 
@@ -17,10 +17,16 @@ public final class GmfConfig {
 
     private GmfConfig() {
     }
+    private static java.util.function.Consumer<Runnable> savePolicy = Runnable::run;
+    public static void setSavePolicy(java.util.function.Consumer<Runnable> policy) { savePolicy = policy; }
+    public static void migrateLoadedConfig() {
+        CLIENT.distantAnimationDistance.set(ConfigMigration.animationRadius(CLIENT.distantAnimationDistance.get()));
+        CLIENT.configVersion.set(ConfigMigration.schema(CLIENT.configVersion.get(), CURRENT_VERSION));
+    }
 
     public static void save() {
         CLIENT.configVersion.set(CURRENT_VERSION);
-        SPEC.save();
+        savePolicy.accept(SPEC::save);
     }
 
     public static void resetAll() {
@@ -30,6 +36,9 @@ public final class GmfConfig {
         CLIENT.flywheelBackend.set(FlywheelBackendMode.DEFAULT);
         CLIENT.acceleratedRenderer.set(true);
         CLIENT.createOcclusionCulling.set(true);
+        CLIENT.pauseOffScreenAnimations.set(false);
+        CLIENT.disabledAddonMechanisms.set(java.util.List.of());
+        CLIENT.adaptiveRecommendations.set(false);
         CLIENT.diagnosticDurationSeconds.set(10);
         CLIENT.developerMode.set(false);
         CLIENT.developerLogging.set(true);
@@ -55,21 +64,14 @@ public final class GmfConfig {
         CLIENT.renderSparkParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
         CLIENT.renderItemBreakParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
         CLIENT.renderWaterSplashParticles.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
-        CLIENT.crushingOutputRendering.set(profile != PcProfile.POTATO && profile != PcProfile.LOW);
         // Entity Culling is a required client dependency. This safe visual-only
         // optimisation stays enabled for every preset, including Potato.
         CLIENT.createOcclusionCulling.set(true);
         CLIENT.mechanismAnimations.values().forEach(value -> value.set(profile != PcProfile.POTATO));
 
-        switch (profile) {
-            case POTATO -> applyRenderingValues(45, 0, 5, 0, CreateParticleMode.OFF, DistantAnimationMode.STATIC);
-            case LOW -> applyRenderingValues(60, 16, 5, 0, CreateParticleMode.OFF, DistantAnimationMode.STATIC);
-            case MEDIUM -> applyRenderingValues(75, 32, 10, 16, CreateParticleMode.REDUCED, DistantAnimationMode.REDUCED);
-            case ABOVE_AVERAGE -> applyRenderingValues(90, 32, 15, 24, CreateParticleMode.REDUCED, DistantAnimationMode.REDUCED);
-            case HIGH -> applyRenderingValues(120, 32, 20, 48, CreateParticleMode.FULL, DistantAnimationMode.REDUCED);
-            case ULTRA -> applyRenderingValues(144, 32, 30, 128, CreateParticleMode.FULL, DistantAnimationMode.FULL);
-            case CUSTOM -> throw new IllegalStateException("Handled above");
-        }
+        var values = ProfileRenderingValues.forProfile(profile);
+        applyRenderingValues(values.targetFps(), values.radius(), values.animationFps(), values.shadowRadius(),
+                values.particles(), values.mode());
     }
 
     private static void applyRenderingValues(int targetFps, double animationDistance, int animationFps,
@@ -93,6 +95,7 @@ public final class GmfConfig {
         public final ModConfigSpec.IntValue targetFps;
         public final ModConfigSpec.EnumValue<PcProfile> pcProfile;
         public final ModConfigSpec.BooleanValue showOverlay;
+        public final ModConfigSpec.BooleanValue adaptiveRecommendations;
         public final ModConfigSpec.EnumValue<ProfilerMode> profilerMode;
         public final ModConfigSpec.BooleanValue beltItemShadowOptimization;
         public final ModConfigSpec.BooleanValue renderTransportedBeltItems;
@@ -110,8 +113,9 @@ public final class GmfConfig {
         public final ModConfigSpec.IntValue animationUpdateTickDivisor;
         public final ModConfigSpec.EnumValue<FlywheelBackendMode> flywheelBackend;
         public final ModConfigSpec.BooleanValue acceleratedRenderer;
-        public final ModConfigSpec.BooleanValue crushingOutputRendering;
         public final ModConfigSpec.BooleanValue createOcclusionCulling;
+        public final ModConfigSpec.BooleanValue pauseOffScreenAnimations;
+        public final ModConfigSpec.ConfigValue<java.util.List<? extends String>> disabledAddonMechanisms;
         public final EnumMap<MechanismAnimationGroup, ModConfigSpec.BooleanValue> mechanismAnimations;
         public final ModConfigSpec.IntValue diagnosticDurationSeconds;
         public final ModConfigSpec.BooleanValue developerMode;
@@ -129,6 +133,8 @@ public final class GmfConfig {
             targetFps = builder.defineInRange("targetFps", 60, 30, 360);
             pcProfile = builder.defineEnum("pcProfile", PcProfile.MEDIUM);
             showOverlay = builder.define("showPerformanceStatistics", false);
+            adaptiveRecommendations = builder.comment("Suggest quality changes after sustained FPS pressure; never applies automatically.")
+                    .define("adaptiveRecommendations", false);
             builder.pop();
 
             builder.push("profiler");
@@ -165,6 +171,12 @@ public final class GmfConfig {
             animationUpdateTickDivisor = builder.comment(
                     "Updates client-side Create visuals every Nth tick. Does not affect machine simulation.")
                     .defineInRange("animationUpdateTickDivisor", 1, 1, 5);
+            pauseOffScreenAnimations = builder.comment(
+                    "Experimental client visual frustum pause. Unknown bounds stay visible. No simulation changes.")
+                    .define("pauseOffScreenAnimations", false);
+            disabledAddonMechanisms = builder.comment("Registry IDs of compatible addon visuals disabled by the user.")
+                    .defineListAllowEmpty("disabledAddonMechanisms", java.util.List.of(), () -> "",
+                            value -> value instanceof String id && net.minecraft.resources.ResourceLocation.tryParse(id) != null);
             builder.pop();
 
             builder.push("flywheel");
@@ -173,10 +185,6 @@ public final class GmfConfig {
                     "Use the CreateBetterFPS-derived SuperByteBuffer renderer when Sodium and Iris are installed. "
                             + "Restart the game after changing this option.")
                     .define("acceleratedRenderer", true);
-            builder.pop();
-
-            builder.push("crushingWheels");
-            crushingOutputRendering = builder.define("renderLooseItemsNearCrushingWheels", true);
             builder.pop();
 
             builder.push("occlusionCulling");

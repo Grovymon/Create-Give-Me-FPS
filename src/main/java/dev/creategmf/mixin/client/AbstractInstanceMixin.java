@@ -16,13 +16,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = AbstractInstance.class, remap = false)
 public abstract class AbstractInstanceMixin {
-    @Unique
-    private boolean createGmf$scrollSuppressed;
-    @Unique
-    private float createGmf$savedSpeedU;
-    @Unique
-    private float createGmf$savedSpeedV;
-
+    @Inject(method = "delete", at = @At("HEAD"), require = 1)
+    private void createGmf$forgetDeletedInstance(CallbackInfo ci) {
+        if ((Object) this instanceof RotatingInstance rotating) RotationAnimationRegistry.forget(rotating);
+        if ((Object) this instanceof ScrollInstance scroll) ScrollAnimationRegistry.forget(scroll);
+    }
     @Inject(method = "setChanged", at = @At("HEAD"), require = 0)
     private void createGmf$freezeUnclassifiedScrolling(CallbackInfo ci) {
         if ((Object) this instanceof RotatingInstance rotating) {
@@ -32,23 +30,8 @@ public abstract class AbstractInstanceMixin {
         if (!((Object) this instanceof ScrollInstance scroll)) {
             return;
         }
-        if (ScrollAnimationRegistry.beforeUpload(scroll)) {
-            return;
-        }
-        boolean suppress = DistantAnimationController.shouldFreezeUnclassifiedScrolling(
-                scroll.x, scroll.y, scroll.z);
-        if (suppress) {
-            if (!createGmf$scrollSuppressed || scroll.speedU != 0 || scroll.speedV != 0) {
-                createGmf$savedSpeedU = scroll.speedU;
-                createGmf$savedSpeedV = scroll.speedV;
-            }
-            scroll.speedU = 0;
-            scroll.speedV = 0;
-            createGmf$scrollSuppressed = true;
-        } else if (createGmf$scrollSuppressed) {
-            scroll.speedU = createGmf$savedSpeedU;
-            scroll.speedV = createGmf$savedSpeedV;
-            createGmf$scrollSuppressed = false;
-        }
+        // Unknown ownership/render-origin coordinates are not world positions.
+        // Never guess which addon, contraption or shared shader owns an instance.
+        ScrollAnimationRegistry.beforeUpload(scroll);
     }
 }

@@ -27,13 +27,29 @@ import org.spongepowered.asm.mixin.injection.At;
  * when the Bearings and Contraptions group is disabled or made distant-static.
  */
 @Mixin(value = ContraptionVisual.class, remap = false)
-public abstract class ContraptionVisualMixin {
-    @Shadow @Final protected AbstractContraptionEntity entity;
+public abstract class ContraptionVisualMixin
+        extends dev.engine_room.flywheel.lib.visual.AbstractEntityVisual<AbstractContraptionEntity> {
+    protected ContraptionVisualMixin(dev.engine_room.flywheel.api.visualization.VisualizationContext context,
+            AbstractContraptionEntity owner, float partialTick) {
+        super(context, owner, partialTick);
+    }
+    @Shadow protected abstract void beginFrame(DynamicVisual.Context context);
+    @Shadow @Final protected java.util.List<com.simibubi.create.content.contraptions.render.ActorVisual> actors;
+    @Shadow @Final protected dev.engine_room.flywheel.lib.task.PlanMap<DynamicVisual, DynamicVisual.Context> dynamicVisuals;
+    @Shadow @Final protected dev.engine_room.flywheel.lib.task.PlanMap<TickableVisual, TickableVisual.Context> tickableVisuals;
     @Unique private long createGmf$lastReducedFrameBucket = Long.MIN_VALUE;
+    @Unique private final dev.creategmf.optimization.animations.FrustumGrace createGmf$grace =
+            new dev.creategmf.optimization.animations.FrustumGrace();
 
     @ModifyReturnValue(method = "planFrame", at = @At("RETURN"), require = 1)
     private Plan<DynamicVisual.Context> createGmf$limitContraptionFrames(Plan<DynamicVisual.Context> original) {
-        return new ConditionalPlan<>(context -> createGmf$shouldUpdateFrame(context), original);
+        // ALWAYS update matrices, structure versions and lighting. Only child/actor visual animation is throttled.
+        return dev.engine_room.flywheel.lib.task.RunnablePlan.of(this::beginFrame).then(
+                new ConditionalPlan<>(this::createGmf$shouldUpdateFrame,
+                        dev.engine_room.flywheel.lib.task.NestedPlan.of(
+                                dev.engine_room.flywheel.lib.task.ForEachPlan.of(() -> actors,
+                                        com.simibubi.create.content.contraptions.render.ActorVisual::beginFrame),
+                                dynamicVisuals)));
     }
 
     @ModifyReturnValue(method = "planTick", at = @At("RETURN"), require = 1)
@@ -43,6 +59,7 @@ public abstract class ContraptionVisualMixin {
 
     private boolean createGmf$shouldUpdateFrame(DynamicVisual.Context context) {
         GmfRuntimeStatus.markAnimationHook();
+        if (createGmf$offScreen()) return false;
         AnimationPolicy policy = DistantAnimationController.animationPolicy(entity.position(),
                 MechanismAnimationGroup.BEARINGS_AND_CONTRAPTIONS, context.camera());
         if (policy == AnimationPolicy.STATIC) {
@@ -61,6 +78,7 @@ public abstract class ContraptionVisualMixin {
 
     private boolean createGmf$shouldUpdateTick() {
         GmfRuntimeStatus.markAnimationHook();
+        if (createGmf$offScreen()) return false;
         AnimationPolicy policy = DistantAnimationController.animationPolicy(entity.position(),
                 MechanismAnimationGroup.BEARINGS_AND_CONTRAPTIONS,
                 Minecraft.getInstance().gameRenderer.getMainCamera());
@@ -69,5 +87,12 @@ public abstract class ContraptionVisualMixin {
         }
         return policy == AnimationPolicy.FULL
                 || DistantAnimationController.shouldUpdateReducedTick(entity.getId());
+    }
+
+    private boolean createGmf$offScreen() {
+        return dev.creategmf.config.GmfConfig.CLIENT.enabled.get()
+                && dev.creategmf.config.GmfConfig.CLIENT.pauseOffScreenAnimations.get()
+                && createGmf$grace.paused(DistantAnimationController.frameIndex(),
+                        dev.creategmf.optimization.animations.OffScreenAnimations.visibleOrUnknown(entity.getBoundingBox()));
     }
 }

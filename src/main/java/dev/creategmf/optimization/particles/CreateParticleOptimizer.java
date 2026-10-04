@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import dev.creategmf.config.CreateParticleMode;
 import dev.creategmf.config.GmfConfig;
-import dev.creategmf.optimization.animations.DistantAnimationController;
 import dev.creategmf.diagnostics.GmfRuntimeStatus;
 
 import net.minecraft.core.BlockPos;
@@ -23,8 +22,8 @@ public final class CreateParticleOptimizer {
     private static long itemBreak;
     private static long fluidSplash;
     private static long directFluidEffectsSuppressed;
-    /** Hose pulleys emit these normal Minecraft fluid effects at the submerged end. */
-    private static final Set<String> HEAVY_VANILLA_FLUID_PARTICLES = Set.of(
+    /** Name hints applied only after Create ownership has already been established. */
+    private static final Set<String> FLUID_NAME_HINTS = Set.of(
             "bubble", "bubble_pop", "splash", "dripping_water", "falling_water",
             "landing_water", "underwater", "current_down", "bubble_column_up",
             "dripping_lava", "falling_lava", "landing_lava", "lava");
@@ -33,29 +32,18 @@ public final class CreateParticleOptimizer {
     }
 
     public static boolean shouldCreate(ParticleOptions options) {
+        ResourceLocation id = BuiltInRegistries.PARTICLE_TYPE.getKey(options.getType());
+        // A vanilla identifier does NOT prove Create provenance. Vanilla water,
+        // lava, smoke, block-breaking and item effects always bypass this global hook.
+        if (id == null || !ParticleRules.registeredCreateParticle(id.getNamespace())) return true;
         GmfRuntimeStatus.markParticleHook();
         requests++;
-        if (!GmfConfig.CLIENT.enabled.get()) {
-            allowed++;
-            return true;
-        }
-        ResourceLocation id = BuiltInRegistries.PARTICLE_TYPE.getKey(options.getType());
-        if (id == null) {
-            allowed++;
-            return true;
-        }
-        boolean createParticle = "create".equals(id.getNamespace());
-        boolean fluidEffect = "minecraft".equals(id.getNamespace())
-                && HEAVY_VANILLA_FLUID_PARTICLES.contains(id.getPath());
+        if (!GmfConfig.CLIENT.enabled.get()) { allowed++; return true; }
         Category category = category(id.getPath());
         countCategory(category);
         if (!isAllowedCategory(id)) {
             suppressed++;
             return false;
-        }
-        if (!createParticle && !fluidEffect) {
-            allowed++;
-            return true;
         }
         // "Off" is absolute: per-category switches must not accidentally let
         // fluid particles through again, as happened with hose pulley splashes.
@@ -63,11 +51,7 @@ public final class CreateParticleOptimizer {
             suppressed++;
             return false;
         }
-        if (createParticle && !GmfConfig.CLIENT.filterCreateParticles.get()) {
-            allowed++;
-            return true;
-        }
-        if (fluidEffect && !GmfConfig.CLIENT.filterFluidParticles.get()) {
+        if (!GmfConfig.CLIENT.filterCreateParticles.get()) {
             allowed++;
             return true;
         }
@@ -84,9 +68,8 @@ public final class CreateParticleOptimizer {
         if (!GmfConfig.CLIENT.enabled.get()) {
             return true;
         }
-        if (DistantAnimationController.shouldBeStatic(position, ownerClassName)) {
-            return false;
-        }
+        // This method is called ONLY by the verified client Blaze Burner paths.
+        if (!GmfConfig.CLIENT.renderSteamSmokeParticles.get()) return false;
         return switch (GmfConfig.CLIENT.createParticleMode.get()) {
             case FULL -> true;
             case REDUCED -> CREATE_PARTICLE_SEQUENCE.getAndIncrement() % 3 == 0;
@@ -113,11 +96,7 @@ public final class CreateParticleOptimizer {
         return true;
     }
 
-    /**
-     * Categories are deliberately based on the registered particle identifier,
-     * so they also cover vanilla effects triggered by Create (hose pulleys,
-     * drills and saws) before the particles reach the client engine.
-     */
+    /** Applied only after provenance has been established (Create namespace or explicit client callsite). */
     private static boolean isAllowedCategory(ResourceLocation id) {
         if (!GmfConfig.CLIENT.enabled.get()) return true;
         String path = id.getPath();
@@ -131,7 +110,7 @@ public final class CreateParticleOptimizer {
     }
 
     private static boolean isFluid(String path) {
-        return HEAVY_VANILLA_FLUID_PARTICLES.contains(path)
+        return FLUID_NAME_HINTS.contains(path)
                 || path.contains("splash") || path.contains("water") || path.contains("lava") || path.contains("bubble");
     }
 

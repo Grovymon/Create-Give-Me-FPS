@@ -27,7 +27,7 @@ public abstract class SuperByteBufferBuilderMixin {
 
     @Inject(method = "build", at = @At(value = "HEAD"), cancellable = true, require = 0)
     public void onBuild(CallbackInfoReturnable<SuperByteBuffer> cir) {
-        if (!GmfConfig.CLIENT.acceleratedRenderer.get()) return;
+        if (!dev.creategmf.client.RendererRestartTracker.acceleratedAtLaunch()) return;
         cir.setReturnValue(new SodiumByteBuffer(this.mesh.toImmutable(), this.shadeSwapVertices.toIntArray()));
     }
 }

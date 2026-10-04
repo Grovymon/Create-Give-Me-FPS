@@ -31,6 +31,7 @@ public abstract class RotatingInstanceMixin {
             CallbackInfoReturnable<RotatingInstance> cir) {
         createGmf$worldPosition = blockEntity.getBlockPos();
         createGmf$ownerClassName = blockEntity.getClass().getName();
+        RotationAnimationRegistry.prepare((RotatingInstance) (Object) this, blockEntity);
     }
 
     @Inject(
@@ -40,6 +41,16 @@ public abstract class RotatingInstanceMixin {
     )
     private void createGmf$registerRotation(KineticBlockEntity blockEntity, Axis axis, float speed,
             CallbackInfoReturnable<RotatingInstance> cir) {
-        RotationAnimationRegistry.register(cir.getReturnValue(), createGmf$worldPosition, createGmf$ownerClassName);
+        RotationAnimationRegistry.register(cir.getReturnValue(), blockEntity);
+    }
+
+    @Inject(method = "setRotationalSpeed", at = @At("RETURN"), require = 1)
+    private void createGmf$captureSourceSpeed(float value, CallbackInfoReturnable<RotatingInstance> cir) {
+        RotationAnimationRegistry.sourceSpeed(cir.getReturnValue(), value);
+    }
+
+    @Inject(method = "setRotationOffset", at = @At("RETURN"), require = 1)
+    private void createGmf$captureSourceOffset(float value, CallbackInfoReturnable<RotatingInstance> cir) {
+        RotationAnimationRegistry.sourceOffset(cir.getReturnValue(), value);
     }
 }

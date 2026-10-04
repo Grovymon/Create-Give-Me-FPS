@@ -14,9 +14,14 @@ public final class RendererRestartTracker {
     }
 
     public static void captureLaunchState() {
-        if (GmfConfig.SPEC.isLoaded()) {
+        if (launchState == null && GmfConfig.SPEC.isLoaded()) {
             launchState = currentState();
         }
+    }
+    public static boolean acceleratedAtLaunch() {
+        if (!GmfConfig.SPEC.isLoaded()) return false;
+        captureLaunchState();
+        return launchState.acceleratedRenderer();
     }
 
     public static boolean isRestartRequired() {

@@ -228,6 +228,13 @@ public final class GmfSettingsScreen extends GmfScreen {
                 }, mouseX, mouseY);
         addTooltipArea(left, y - 29, cardWidth - 64, 22,
                 Component.translatable("tooltip.create_gmf.occlusion_culling"));
+        y = toggleRow(graphics, left, y, cardWidth, Component.translatable("config.create_gmf.pause_off_screen"),
+                GmfConfig.CLIENT.pauseOffScreenAnimations.get(), () -> {
+                    GmfConfig.CLIENT.pauseOffScreenAnimations.set(!GmfConfig.CLIENT.pauseOffScreenAnimations.get());
+                    customAndRefresh();
+                }, mouseX, mouseY);
+        addTooltipArea(left, y - 29, cardWidth - 64, 22,
+                Component.translatable("tooltip.create_gmf.pause_off_screen"));
         y = sliderRow(graphics, left, y, cardWidth, Component.translatable("config.create_gmf.animation_distance_slider"),
                 GmfConfig.CLIENT.distantAnimationDistance.get().intValue(), 0, MAX_ANIMATION_DISTANCE,
                 this::setAnimationDistance, Component.translatable("tooltip.create_gmf.animation_distance"), mouseX, mouseY);
@@ -274,6 +281,11 @@ public final class GmfSettingsScreen extends GmfScreen {
             rebuildSearchBox();
         });
         y += 36;
+        drawAction(graphics, left + 12, y, Math.min(230, cardWidth - 24),
+                Component.translatable("gui.create_gmf.addons"), false, mouseX, mouseY);
+        addHitArea(left + 12, y, Math.min(230, cardWidth - 24), 28,
+                () -> minecraft.setScreen(new GmfAddonScreen(this, null)));
+        y += 36;
         endCard(graphics, left, cardTop, cardWidth, y);
 
         y += 12;
@@ -288,13 +300,6 @@ public final class GmfSettingsScreen extends GmfScreen {
         y = toggleRow(graphics, left, y, cardWidth, Component.translatable("config.create_gmf.belt_item_shadows"),
                 GmfConfig.CLIENT.beltItemShadowOptimization.get(), () -> {
                     GmfConfig.CLIENT.beltItemShadowOptimization.set(!GmfConfig.CLIENT.beltItemShadowOptimization.get());
-                    customAndSave();
-                }, mouseX, mouseY);
-        y += 8;
-        y = toggleRow(graphics, left, y, cardWidth,
-                Component.translatable("config.create_gmf.crushing_output_rendering"),
-                GmfConfig.CLIENT.crushingOutputRendering.get(), () -> {
-                    GmfConfig.CLIENT.crushingOutputRendering.set(!GmfConfig.CLIENT.crushingOutputRendering.get());
                     customAndSave();
                 }, mouseX, mouseY);
         endCard(graphics, left, cardTop, cardWidth, y);
@@ -441,6 +446,11 @@ public final class GmfSettingsScreen extends GmfScreen {
         beginContent();
         int w = contentRight - contentLeft;
         int y = beginCard(graphics, contentLeft, 78, w, Component.translatable("gui.create_gmf.card.other"));
+        y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.adaptive_recommendations"),
+                GmfConfig.CLIENT.adaptiveRecommendations.get(), () -> {
+                    GmfConfig.CLIENT.adaptiveRecommendations.set(!GmfConfig.CLIENT.adaptiveRecommendations.get());
+                    GmfConfig.save();
+                }, mouseX, mouseY);
         y = toggleRow(graphics, contentLeft, y, w, Component.translatable("config.create_gmf.enable"),
                 GmfConfig.CLIENT.enabled.get(), () -> {
                 GmfConfig.CLIENT.enabled.set(!GmfConfig.CLIENT.enabled.get());
@@ -456,6 +466,16 @@ public final class GmfSettingsScreen extends GmfScreen {
                     GmfConfig.save();
                 }, mouseX, mouseY);
         if (GmfConfig.CLIENT.developerMode.get()) {
+            drawAction(graphics, contentLeft + 12, y, Math.min(260, w - 24),
+                    Component.translatable("gui.create_gmf.benchmark_optimization"), false, mouseX, mouseY);
+            addHitArea(contentLeft + 12, y, Math.min(260, w - 24), 28,
+                    () -> minecraft.setScreen(new GmfOptimizationBenchmarkScreen(this)));
+            y += 38;
+            drawAction(graphics, contentLeft + 12, y, Math.min(260, w - 24),
+                    Component.translatable("gui.create_gmf.recommended_optimization"), false, mouseX, mouseY);
+            addHitArea(contentLeft + 12, y, Math.min(260, w - 24), 28,
+                    () -> minecraft.setScreen(new GmfDiagnosticsScreen(this)));
+            y += 38;
             // Recording is deliberately an explicit action rather than a tiny
             // checkbox: the user can clearly see whether diagnostics are
             // currently writing reports and can stop them in one click.

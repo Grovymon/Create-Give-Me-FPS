@@ -21,3 +21,10 @@ jobs:
         run: chmod +x gradlew
       - name: Build and test
         run: ./gradlew clean test build --no-daemon
+      - name: Upload distributable JAR and test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmf-build
+          path: |
+            build/libs/*.jar
+            build/reports/tests/test/

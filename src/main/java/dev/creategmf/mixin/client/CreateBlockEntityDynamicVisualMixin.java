@@ -47,7 +47,8 @@ public abstract class CreateBlockEntityDynamicVisualMixin extends AbstractBlockE
     @Inject(method = "beginFrame", at = @At("HEAD"), cancellable = true, require = 0)
     private void createGmf$limitConcreteAnimation(DynamicVisual.Context context, CallbackInfo ci) {
         AnimationPolicy policy = DistantAnimationController.animationPolicy(
-                pos, getClass().getName(), context.camera());
+                ((dev.creategmf.optimization.animations.BlockEntityVisualAccess) this).createGmf$getAnimationState(),
+                context.camera());
         if (policy == AnimationPolicy.STATIC) {
             ci.cancel();
             return;

@@ -22,90 +22,54 @@ public final class DistantAnimationController {
 
     private static long frameIndex;
     private static long tickIndex;
-    /**
-     * Rebuild nearby Create visuals after crossing an animation-distance
-     * boundary.  64 blocks was too coarse: a player could leave a 32-block
-     * radius and return without ever asking Flywheel to refresh a visual that
-     * had been deliberately made static.  Eight blocks keeps the scan bounded
-     * while making the return to a factory reliably resume its animations.
-     */
-    private static final double VISUAL_REFRESH_MOVEMENT_SQUARED = 8.0 * 8.0;
-    private static Vec3 lastRefreshPosition;
+    private static ClientLevel animationLevel;
 
     private DistantAnimationController() {
     }
 
     public static void nextFrame() {
         frameIndex++;
-        RotationAnimationRegistry.onFrame();
-        ScrollAnimationRegistry.onFrame();
     }
+
+    public static long frameIndex() { return frameIndex; }
 
     public static boolean shouldUpdate(Object visual, Camera camera) {
         GmfRuntimeStatus.markAnimationHook();
-        if (!GmfConfig.CLIENT.enabled.get() || !(visual instanceof BlockEntityVisualAccess access)
-                || !visual.getClass().getName().startsWith("com.simibubi.create.")) {
-            return true;
-        }
-        MechanismAnimationGroup group = MechanismAnimationGroup.fromClassName(visual.getClass().getName());
-        if (!animationsEnabled(group)) {
-            return updateScrollableVisual(visual, false);
-        }
-        BlockPos pos = access.createGmf$getWorldPosition();
-        double limit = GmfConfig.CLIENT.distantAnimationDistance.get();
-        if (limit <= 0) {
-            return updateScrollableVisual(visual, false);
-        }
-        double distanceSquared = camera.getPosition().distanceToSqr(Vec3.atCenterOf(pos));
-        if (distanceSquared <= limit * limit) {
-            return updateScrollableVisual(visual, true);
-        }
-        DistantAnimationMode mode = GmfConfig.CLIENT.distantAnimationMode.get();
-        boolean shouldUpdate = switch (mode) {
-            case FULL -> true;
-            case REDUCED -> distanceSquared <= limit * limit * 4
-                    && Math.floorMod(frameIndex + pos.asLong(), 6) == 0;
-            case STATIC -> false;
-        };
-        return updateScrollableVisual(visual, shouldUpdate);
+        if (!(visual instanceof BlockEntityVisualAccess access)) return true;
+        VisualAnimationState state = access.createGmf$getAnimationState();
+        AnimationPolicy policy = animationPolicy(state, camera);
+        long bucket = currentAnimationBucket();
+        boolean update = policy == AnimationPolicy.FULL
+                || policy == AnimationPolicy.REDUCED && state.lastBucket != bucket;
+        if (update) state.lastBucket = bucket;
+        boolean outside = state.knownWorldOwner() && !OffScreenAnimations.visibleOrUnknown(state.worldBounds());
+        if (state.knownWorldOwner()) VisualWorkCounters.observe(outside, !update, state.wasPaused && update,
+                !"create".equals(state.descriptor.namespace()));
+        state.wasPaused = !update;
+        return updateScrollableVisual(visual, update);
     }
 
     public static boolean shouldTick(Object visual) {
-        if (!GmfConfig.CLIENT.enabled.get() || !(visual instanceof BlockEntityVisualAccess access)
-                || !visual.getClass().getName().startsWith("com.simibubi.create.")) {
-            return true;
-        }
-        MechanismAnimationGroup group = MechanismAnimationGroup.fromClassName(visual.getClass().getName());
-        if (!animationsEnabled(group)) {
-            return false;
-        }
-        double limit = GmfConfig.CLIENT.distantAnimationDistance.get();
-        if (limit <= 0) {
-            return false;
-        }
-        // This is a client visual update divider only.  Create's kinetic
-        // network, stress calculation and machine processing stay untouched.
-        if (Math.floorMod(tickIndex + access.createGmf$getWorldPosition().asLong(),
-                GmfConfig.CLIENT.animationUpdateTickDivisor.get()) != 0) {
-            return false;
-        }
-        DistantAnimationMode mode = GmfConfig.CLIENT.distantAnimationMode.get();
-        if (mode == DistantAnimationMode.FULL) {
-            return true;
-        }
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
-            return true;
-        }
-        BlockPos pos = access.createGmf$getWorldPosition();
-        double distanceSquared = minecraft.gameRenderer.getMainCamera().getPosition()
-                .distanceToSqr(Vec3.atCenterOf(pos));
-        if (distanceSquared <= limit * limit) {
-            return true;
-        }
-        return mode == DistantAnimationMode.REDUCED
-                && distanceSquared <= limit * limit * 4
-                && Math.floorMod(tickIndex + pos.asLong(), 3) == 0;
+        if (!GmfConfig.CLIENT.enabled.get() || !(visual instanceof BlockEntityVisualAccess access)) return true;
+        VisualAnimationState state = access.createGmf$getAnimationState();
+        if (!state.knownWorldOwner()) return true;
+        AnimationPolicy policy = animationPolicy(state, Minecraft.getInstance().gameRenderer.getMainCamera());
+        return policy != AnimationPolicy.STATIC && Math.floorMod(tickIndex + state.owner.getBlockPos().asLong(),
+                GmfConfig.CLIENT.animationUpdateTickDivisor.get()) == 0
+                && (policy == AnimationPolicy.FULL || shouldUpdateReducedTick(state.owner.getBlockPos().hashCode()));
+    }
+
+    public static AnimationPolicy animationPolicy(VisualAnimationState state, Camera camera) {
+        if (!state.knownWorldOwner() || camera == null) return AnimationPolicy.FULL;
+        boolean outside = GmfConfig.CLIENT.pauseOffScreenAnimations.get()
+                && state.grace.paused(frameIndex, OffScreenAnimations.visibleOrUnknown(state.worldBounds()));
+        BlockPos pos = state.owner.getBlockPos();
+        return AnimationRules.evaluate(GmfConfig.CLIENT.enabled.get(), true,
+                animationsEnabled(state.descriptor.group())
+                        && !GmfConfig.CLIENT.disabledAddonMechanisms.get().contains(state.descriptor.registryId()),
+                GmfConfig.CLIENT.distantAnimationDistance.get(),
+                camera.getPosition().distanceToSqr(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5),
+                GmfConfig.CLIENT.distantAnimationMode.get(), outside);
     }
 
     public static boolean shouldBeStatic(BlockPos pos, String ownerClassName) {
@@ -123,28 +87,11 @@ public final class DistantAnimationController {
     }
 
     public static AnimationPolicy animationPolicy(Vec3 position, MechanismAnimationGroup group, Camera camera) {
-        if (!GmfConfig.CLIENT.enabled.get()) {
-            return AnimationPolicy.FULL;
-        }
-        if (!animationsEnabled(group) || GmfConfig.CLIENT.distantAnimationDistance.get() <= 0) {
-            return AnimationPolicy.STATIC;
-        }
-        DistantAnimationMode mode = GmfConfig.CLIENT.distantAnimationMode.get();
-        if (mode == DistantAnimationMode.FULL) {
-            return AnimationPolicy.FULL;
-        }
-        if (position == null || camera == null) {
-            return mode == DistantAnimationMode.REDUCED ? AnimationPolicy.REDUCED : AnimationPolicy.STATIC;
-        }
-        double limit = GmfConfig.CLIENT.distantAnimationDistance.get();
-        double distanceSquared = camera.getPosition().distanceToSqr(position);
-        if (distanceSquared <= limit * limit) {
-            return AnimationPolicy.FULL;
-        }
-        if (mode == DistantAnimationMode.REDUCED && distanceSquared <= limit * limit * 4) {
-            return AnimationPolicy.REDUCED;
-        }
-        return AnimationPolicy.STATIC;
+        boolean known = position != null && camera != null;
+        return AnimationRules.evaluate(GmfConfig.CLIENT.enabled.get(), known, animationsEnabled(group),
+                GmfConfig.CLIENT.distantAnimationDistance.get(),
+                known ? camera.getPosition().distanceToSqr(position) : Double.NaN,
+                GmfConfig.CLIENT.distantAnimationMode.get(), false);
     }
 
     public static long currentAnimationBucket() {
@@ -159,33 +106,22 @@ public final class DistantAnimationController {
 
     public static void tick() {
         tickIndex++;
+        ClientLevel currentLevel = Minecraft.getInstance().level;
+        if (animationLevel != currentLevel) {
+            RotationAnimationRegistry.cleanWorld();
+            ScrollAnimationRegistry.cleanWorld();
+            VisualPopulation.cleanWorld();
+            OffScreenAnimations.clear();
+            animationLevel = currentLevel;
+        }
         RotationAnimationRegistry.onClientTick();
         ScrollAnimationRegistry.onClientTick();
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || GmfConfig.CLIENT.distantAnimationMode.get() == DistantAnimationMode.FULL) {
-            lastRefreshPosition = null;
-            return;
-        }
-        Vec3 current = minecraft.player.position();
-        if (lastRefreshPosition == null) {
-            lastRefreshPosition = current;
-            refreshLoadedKinetics();
-        } else if (current.distanceToSqr(lastRefreshPosition) >= VISUAL_REFRESH_MOVEMENT_SQUARED) {
-            lastRefreshPosition = current;
-            refreshAnimationBoundary();
-        }
+        // Movement does not rebuild visuals. Registered instances resume from captured source values.
     }
 
     public static void refreshLoadedKinetics() {
         Minecraft minecraft = Minecraft.getInstance();
         int radius = Math.max(2, minecraft.options.getEffectiveRenderDistance());
-        refreshCreateVisuals(minecraft, radius);
-    }
-
-    private static void refreshAnimationBoundary() {
-        Minecraft minecraft = Minecraft.getInstance();
-        int configuredRadius = (int) Math.ceil(GmfConfig.CLIENT.distantAnimationDistance.get() / 16.0) + 2;
-        int radius = Math.min(Math.max(2, minecraft.options.getEffectiveRenderDistance()), configuredRadius);
         refreshCreateVisuals(minecraft, radius);
     }
 
@@ -202,7 +138,7 @@ public final class DistantAnimationController {
                     continue;
                 }
                 for (BlockEntity blockEntity : level.getChunk(x, z).getBlockEntities().values()) {
-                    if (blockEntity.getClass().getName().startsWith("com.simibubi.create.")) {
+                    if (dev.creategmf.integration.CreateVisualClassifier.classify(blockEntity).supported()) {
                         VisualizationHelper.queueUpdate(blockEntity);
                     }
                 }
@@ -228,44 +164,9 @@ public final class DistantAnimationController {
         return (float) Math.floor(original / stepTicks) * stepTicks;
     }
 
-    public static boolean animationsGloballyDisabled() {
-        // Sprite tickers can run while resources are loading, before the
-        // NeoForge config has been attached.  Treat that short period as normal
-        // rendering instead of reading an unavailable ConfigValue.
-        return GmfConfig.SPEC.isLoaded()
-                && GmfConfig.CLIENT.enabled.get()
-                && GmfConfig.CLIENT.distantAnimationDistance.get() <= 0;
-    }
-
     public static boolean shouldSuppressUnpositioned(MechanismAnimationGroup group) {
         return GmfConfig.CLIENT.enabled.get()
                 && (GmfConfig.CLIENT.distantAnimationDistance.get() <= 0 || !animationsEnabled(group));
-    }
-
-    public static boolean shouldFreezeSharedFluidTextures() {
-        return animationsGloballyDisabled();
-    }
-
-    public static boolean shouldFreezeUnclassifiedScrolling(double x, double y, double z) {
-        if (!GmfConfig.CLIENT.enabled.get()) {
-            return false;
-        }
-        if (GmfConfig.CLIENT.distantAnimationDistance.get() <= 0 || allMechanismAnimationsDisabled()) {
-            return true;
-        }
-        if (GmfConfig.CLIENT.distantAnimationMode.get() == DistantAnimationMode.FULL) {
-            return false;
-        }
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
-            return false;
-        }
-        double limit = GmfConfig.CLIENT.distantAnimationDistance.get();
-        return minecraft.gameRenderer.getMainCamera().getPosition().distanceToSqr(x, y, z) > limit * limit;
-    }
-
-    private static boolean allMechanismAnimationsDisabled() {
-        return GmfConfig.CLIENT.mechanismAnimations.values().stream().noneMatch(value -> value.get());
     }
 
     private static boolean updateScrollableVisual(Object visual, boolean shouldUpdate) {

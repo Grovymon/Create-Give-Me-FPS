@@ -1,9 +1,7 @@
 package dev.creategmf.optimization.animations;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.simibubi.create.content.kinetics.base.RotatingInstance;
 
@@ -20,72 +18,51 @@ import net.minecraft.core.BlockPos;
  * insufficient because the rotating shader advances from global render time.
  */
 public final class RotationAnimationRegistry {
-    private static final Map<RotatingInstance, Entry> ENTRIES = new WeakHashMap<>();
+    private static final Map<RotatingInstance, Entry> ENTRIES = new ConcurrentHashMap<>();
     private static long lastSampleBucket = Long.MIN_VALUE;
 
     private RotationAnimationRegistry() {
     }
 
-    public static void register(RotatingInstance instance, BlockPos position, String ownerClassName) {
-        Entry entry;
-        synchronized (ENTRIES) {
-            entry = ENTRIES.computeIfAbsent(instance, ignored -> new Entry());
-            entry.position = position;
-            entry.ownerClassName = ownerClassName;
-            entry.originalSpeed = instance.rotationalSpeed;
-            entry.baseOffset = instance.rotationOffset;
-        }
+    public static void register(RotatingInstance instance, net.minecraft.world.level.block.entity.BlockEntity owner) {
+        Entry entry = ENTRIES.computeIfAbsent(instance, ignored -> new Entry(new VisualAnimationState(owner)));
         apply(instance, entry, true);
     }
+    public static void prepare(RotatingInstance instance, net.minecraft.world.level.block.entity.BlockEntity owner) {
+        ENTRIES.computeIfAbsent(instance, ignored -> new Entry(new VisualAnimationState(owner)));
+    }
+
+    public static void sourceSpeed(RotatingInstance instance, float value) {
+        Entry entry = ENTRIES.get(instance);
+        if (entry != null) entry.source.speed(value); // Includes a real zero RPM update.
+    }
+    public static void sourceOffset(RotatingInstance instance, float value) {
+        Entry entry = ENTRIES.get(instance);
+        if (entry != null) entry.source.offset(value);
+    }
+    public static void forget(RotatingInstance instance) { ENTRIES.remove(instance); }
+    public static void clear() { ENTRIES.clear(); }
+    public static void cleanWorld() { ENTRIES.entrySet().removeIf(entry -> !entry.getValue().state.knownWorldOwner()); }
 
     public static void beforeUpload(RotatingInstance instance) {
-        Entry entry;
-        synchronized (ENTRIES) {
-            entry = ENTRIES.get(instance);
-        }
+        Entry entry = ENTRIES.get(instance);
         if (entry == null) {
             return;
         }
 
-        AnimationPolicy policy = policy(entry);
-        if (instance.rotationalSpeed != 0) {
-            entry.originalSpeed = instance.rotationalSpeed;
-            entry.baseOffset = instance.rotationOffset;
-        } else if (policy == AnimationPolicy.FULL) {
-            entry.originalSpeed = 0;
-            entry.baseOffset = instance.rotationOffset;
-        }
+        // Do not infer source speed from a value previously zeroed by GMF.
         apply(instance, entry, false);
     }
 
     public static void onClientTick() {
-        snapshot().forEach(tracked -> apply(tracked.instance(), tracked.entry(), false));
+        ENTRIES.forEach((instance, entry) -> apply(instance, entry, false));
     }
 
     public static void onFrame() {
         long bucket = DistantAnimationController.currentAnimationBucket();
-        if (bucket == lastSampleBucket) {
-            return;
-        }
+        boolean sample = bucket != lastSampleBucket;
         lastSampleBucket = bucket;
-        snapshot().forEach(tracked -> {
-            if (policy(tracked.entry()) == AnimationPolicy.REDUCED) {
-                apply(tracked.instance(), tracked.entry(), true);
-            }
-        });
-    }
-
-    /**
-     * WeakHashMap may expunge collected keys during an ordinary read. Keeping a
-     * strong per-pass snapshot also prevents Flywheel uploads from structurally
-     * changing the registry while animation policies are being applied.
-     */
-    private static List<Tracked> snapshot() {
-        synchronized (ENTRIES) {
-            List<Tracked> tracked = new ArrayList<>(ENTRIES.size());
-            ENTRIES.forEach((instance, entry) -> tracked.add(new Tracked(instance, entry)));
-            return tracked;
-        }
+        ENTRIES.forEach((instance, entry) -> apply(instance, entry, sample));
     }
 
     private static void apply(RotatingInstance instance, Entry entry, boolean sampleReduced) {
@@ -93,9 +70,9 @@ public final class RotationAnimationRegistry {
         boolean changed = policy != entry.lastPolicy;
 
         if (policy == AnimationPolicy.FULL) {
-            changed |= instance.rotationalSpeed != entry.originalSpeed || instance.rotationOffset != entry.baseOffset;
-            instance.rotationalSpeed = entry.originalSpeed;
-            instance.rotationOffset = entry.baseOffset;
+            changed |= instance.rotationalSpeed != entry.source.speed() || instance.rotationOffset != entry.source.offset();
+            instance.rotationalSpeed = entry.source.renderedSpeed(false);
+            instance.rotationOffset = entry.source.offset();
         } else if (policy == AnimationPolicy.REDUCED) {
             if (sampleReduced || entry.lastPolicy != AnimationPolicy.REDUCED) {
                 entry.sampledOffset = sampledOffset(entry);
@@ -123,27 +100,24 @@ public final class RotationAnimationRegistry {
     private static AnimationPolicy policy(Entry entry) {
         Minecraft minecraft = Minecraft.getInstance();
         Camera camera = minecraft.gameRenderer == null ? null : minecraft.gameRenderer.getMainCamera();
-        return DistantAnimationController.animationPolicy(entry.position, entry.ownerClassName, camera);
+        return DistantAnimationController.animationPolicy(entry.state, camera);
     }
 
     private static float sampledOffset(Entry entry) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
-            return entry.baseOffset;
+            return entry.source.offset();
         }
         float renderSeconds = AnimationTickHolder.getRenderTime(minecraft.level) / 20f;
-        return entry.baseOffset + renderSeconds * entry.originalSpeed;
+        return entry.source.offset() + renderSeconds * entry.source.speed();
     }
 
     private static final class Entry {
-        private BlockPos position;
-        private String ownerClassName;
-        private float originalSpeed;
-        private float baseOffset;
+        private final VisualAnimationState state;
+        private Entry(VisualAnimationState state) { this.state = state; }
+        private final ShaderAnimationSource source = new ShaderAnimationSource();
         private float sampledOffset;
         private AnimationPolicy lastPolicy;
     }
 
-    private record Tracked(RotatingInstance instance, Entry entry) {
-    }
 }

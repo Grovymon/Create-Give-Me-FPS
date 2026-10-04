@@ -1,5 +1,18 @@
 # Create: Give Me FPS — performance analysis
 
+## Implemented audit outcome
+
+Source analysis below is retained as background, not an assertion of measured cost.
+The current code removes proximity-based ItemEntity hiding and shared vanilla fluid texture freezing;
+captures canonical shader source values for restoration; adds opt-in frustum policy, structural addon
+ownership and client-thread occlusion state transitions; provides measured counters and selected A/B.
+Contraption transform/light/rebuild work remains unconditional. GPU timing, item batching/interpolation,
+dimension overrides and contraption wall culling are deferred: see [FUTURE_WORK](FUTURE_WORK.md).
+Safe particle filtering is Create-namespace or explicit verified client-callsite only.
+Direct fluid hooks cover Off/category suppression; Reduced particle admission applies at the registered
+Create factory. Unknown vanilla drill/saw/break-event origins are not filtered.
+No implementation or source reading establishes an FPS gain; repeatable in-game captures are required.
+
 ## Scope and evidence boundary
 
 This analysis targets Minecraft 1.21.1, NeoForge 21.1.219, Create 6.0.10
@@ -34,13 +47,13 @@ CPU/GPU: Both
 Measured/Assumed: Source-observed, runtime cost not yet measured
 Current behavior: Iterates transported stacks; computes transforms and lighting; renders a planar shadow and one or more item-model copies.
 Existing Create/Flywheel optimization: Belt geometry is instanced, item rendering is distance-culled by Create, and extra stack copies are limited by distance.
-Possible GMF optimization: Skip only the planar transported-item shadow beyond a configured distance.
+Current GMF optimization: Skip planar transported-item shadows, or explicitly hide the transported-item render overlay; never hide arbitrary ItemEntity.
 Expected benefit: Lower CPU vertex submission and fragment work in item-heavy belt scenes.
 Compatibility risk: Low to medium because the hook targets one Create method invocation.
 Gameplay risk: None; rendering only.
 ```
 
-This is the first GMF optimization. It is disabled safely if its mixin cannot
+This was the first narrow GMF optimization. It is disabled safely if its mixin cannot
 apply. It exposes attempted, rendered, and skipped shadow counters for a real
 before/after session.
 
@@ -76,7 +89,7 @@ CPU/GPU: Both
 Measured/Assumed: Source-observed
 Current behavior: One transformed structure instance plus child and actor visual plans. Light sections are collected for the current bounding box.
 Existing Create/Flywheel optimization: Structure and children use independent version counters; the structure is not rebuilt every frame.
-Possible GMF optimization: Profile version churn and section changes before considering any hook.
+Current GMF optimization: Gate actor/child visual animation plans; keep beginFrame transforms, lighting and version-driven rebuilds unconditional.
 Expected benefit: Unknown until measured.
 Compatibility risk: High.
 Gameplay risk: Rendering-only candidates exist, but incorrect bounds can hide visible blocks.
@@ -149,16 +162,16 @@ Side: Server/common
 Thread: Server thread
 Frequency: Tick and dirty-state dependent
 CPU/GPU: CPU
-Measured/Assumed: Not attributed by GMF 0.1
+Measured/Assumed: Not attributed by GMF
 Current behavior: Gameplay-authoritative speed, stress, inventory, recipes, fluids, and contraption logic.
 Existing Create/Flywheel optimization: Subsystem-specific caching and dirty-state handling in Create.
-Possible GMF optimization: None in 0.1. Profile first.
+Possible GMF optimization: None. Gameplay mutation is prohibited.
 Expected benefit: Unknown.
 Compatibility risk: High.
 Gameplay risk: High; tick skipping is prohibited.
 ```
 
-## First optimization decision
+## Original narrow optimization decision
 
 The transported-item shadow hook is narrow, client-only, reversible, visible in
 counters, and does not replace Flywheel or modify item transport. It therefore
