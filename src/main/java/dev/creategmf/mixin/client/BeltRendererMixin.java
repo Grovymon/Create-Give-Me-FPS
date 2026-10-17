@@ -32,11 +32,12 @@ public abstract class BeltRendererMixin {
     private void createGmf$skipMovingBeltItems(BeltBlockEntity belt, float partialTicks,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, CallbackInfo ci) {
         GmfRuntimeStatus.markBeltItemHook();
-        if (!dev.creategmf.config.GmfConfig.CLIENT.renderTransportedBeltItems.get()
+        if (dev.creategmf.config.GmfConfig.CLIENT.enabled.get()
+                && (!dev.creategmf.config.GmfConfig.CLIENT.renderTransportedBeltItems.get()
                 || dev.creategmf.optimization.animations.DistantAnimationController.animationPolicy(belt.getBlockPos(),
                 dev.creategmf.config.MechanismAnimationGroup.BELTS,
                 net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera())
-                == dev.creategmf.optimization.animations.DistantAnimationController.AnimationPolicy.STATIC) {
+                == dev.creategmf.optimization.animations.DistantAnimationController.AnimationPolicy.STATIC)) {
             ci.cancel();
         }
     }

@@ -123,28 +123,11 @@ public final class DistantAnimationController {
     }
 
     public static AnimationPolicy animationPolicy(Vec3 position, MechanismAnimationGroup group, Camera camera) {
-        if (!GmfConfig.CLIENT.enabled.get()) {
-            return AnimationPolicy.FULL;
-        }
-        if (!animationsEnabled(group) || GmfConfig.CLIENT.distantAnimationDistance.get() <= 0) {
-            return AnimationPolicy.STATIC;
-        }
-        DistantAnimationMode mode = GmfConfig.CLIENT.distantAnimationMode.get();
-        if (mode == DistantAnimationMode.FULL) {
-            return AnimationPolicy.FULL;
-        }
-        if (position == null || camera == null) {
-            return mode == DistantAnimationMode.REDUCED ? AnimationPolicy.REDUCED : AnimationPolicy.STATIC;
-        }
-        double limit = GmfConfig.CLIENT.distantAnimationDistance.get();
-        double distanceSquared = camera.getPosition().distanceToSqr(position);
-        if (distanceSquared <= limit * limit) {
-            return AnimationPolicy.FULL;
-        }
-        if (mode == DistantAnimationMode.REDUCED && distanceSquared <= limit * limit * 4) {
-            return AnimationPolicy.REDUCED;
-        }
-        return AnimationPolicy.STATIC;
+        boolean positioned = position != null && camera != null;
+        return AnimationPolicyRules.evaluate(GmfConfig.CLIENT.enabled.get(), animationsEnabled(group),
+                GmfConfig.CLIENT.distantAnimationDistance.get(), positioned,
+                positioned ? camera.getPosition().distanceToSqr(position) : Double.NaN,
+                GmfConfig.CLIENT.distantAnimationMode.get());
     }
 
     public static long currentAnimationBucket() {
@@ -247,21 +230,12 @@ public final class DistantAnimationController {
     }
 
     public static boolean shouldFreezeUnclassifiedScrolling(double x, double y, double z) {
-        if (!GmfConfig.CLIENT.enabled.get()) {
-            return false;
-        }
-        if (GmfConfig.CLIENT.distantAnimationDistance.get() <= 0 || allMechanismAnimationsDisabled()) {
-            return true;
-        }
-        if (GmfConfig.CLIENT.distantAnimationMode.get() == DistantAnimationMode.FULL) {
-            return false;
-        }
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
-            return false;
-        }
-        double limit = GmfConfig.CLIENT.distantAnimationDistance.get();
-        return minecraft.gameRenderer.getMainCamera().getPosition().distanceToSqr(x, y, z) > limit * limit;
+        return AnimationPolicyRules.freezeUnclassifiedScroll(GmfConfig.CLIENT.enabled.get(),
+                GmfConfig.CLIENT.distantAnimationDistance.get(), allMechanismAnimationsDisabled(),
+                GmfConfig.CLIENT.distantAnimationMode.get(), minecraft.level != null,
+                minecraft.level == null ? Double.NaN
+                        : minecraft.gameRenderer.getMainCamera().getPosition().distanceToSqr(x, y, z));
     }
 
     private static boolean allMechanismAnimationsDisabled() {

@@ -1,65 +1,52 @@
 package dev.creategmf.optimization.occlusion;
 
 import java.lang.reflect.Method;
-
 import dev.creategmf.CreateGmf;
 import dev.creategmf.integration.ModCompatibilityDetector;
 
-/**
- * Optional, reflection-only bridge to Entity Culling's {@code Cullable} API.
- *
- * <p>No Entity Culling type appears in a descriptor or mixin target. This is
- * important: GMF must still load normally when that optional mod is absent or
- * changes its package. A failed lookup simply leaves every visual visible.</p>
- */
+/** Guarded reflection, no copied Entity Culling implementation. Unknown means visible. */
 public final class EntityCullingBridge {
-    private static boolean resolved;
-    private static boolean available;
-    private static Class<?> cullableType;
-    private static Method isCulled;
-    private static Method isForcedVisible;
-
-    private EntityCullingBridge() {
-    }
-
+    private record Binding(Class<?> type, Method culled, Method forcedVisible) {}
+    private static volatile boolean resolved;
+    private static volatile Binding binding;
+    private EntityCullingBridge() {}
     public static boolean isAvailable() {
-        resolve();
-        return available;
+        if (!resolved) resolve();
+        return binding != null;
     }
-
     public static boolean isCulled(Object subject) {
-        if (subject == null || !isAvailable() || !cullableType.isInstance(subject)) return false;
+        if (!resolved) resolve();
+        Binding current = binding;
+        if (subject == null || current == null || !current.type().isInstance(subject)) return false;
         try {
-            return Boolean.TRUE.equals(isCulled.invoke(subject))
-                    && !Boolean.TRUE.equals(isForcedVisible.invoke(subject));
-        } catch (ReflectiveOperationException | LinkageError error) {
+            return Boolean.TRUE.equals(current.culled().invoke(subject))
+                    && !Boolean.TRUE.equals(current.forcedVisible().invoke(subject));
+        } catch (ReflectiveOperationException | LinkageError | IllegalArgumentException error) {
             disable(error);
             return false;
         }
     }
-
-    private static void resolve() {
+    private static synchronized void resolve() {
         if (resolved) return;
+        if (ModCompatibilityDetector.hasEntityCulling()) {
+            Throwable failure = null;
+            for (String name : new String[] {
+                    "dev.tr7zw.entityculling.access.Cullable",
+                    "dev.tr7zw.entityculling.versionless.access.Cullable" }) {
+                try {
+                    Class<?> type = Class.forName(name, false, EntityCullingBridge.class.getClassLoader());
+                    binding = new Binding(type, type.getMethod("isCulled"), type.getMethod("isForcedVisible"));
+                    break;
+                } catch (ReflectiveOperationException | LinkageError error) { failure = error; }
+            }
+            if (binding == null) CreateGmf.LOGGER.warn("Entity Culling API unavailable; leaving visuals visible.", failure);
+        }
         resolved = true;
-        if (!ModCompatibilityDetector.hasEntityCulling()) return;
-        try {
-            ClassLoader loader = EntityCullingBridge.class.getClassLoader();
-            cullableType = Class.forName("dev.tr7zw.entityculling.versionless.access.Cullable", false, loader);
-            isCulled = cullableType.getMethod("isCulled");
-            isForcedVisible = cullableType.getMethod("isForcedVisible");
-            available = true;
-        } catch (ReflectiveOperationException | LinkageError error) {
-            disable(error);
-        }
     }
-
-    private static void disable(Throwable error) {
-        if (available || ModCompatibilityDetector.hasEntityCulling()) {
-            CreateGmf.LOGGER.warn("Entity Culling bridge is unavailable; GMF will not hide Create visuals.", error);
+    private static synchronized void disable(Throwable error) {
+        if (binding != null) {
+            binding = null;
+            CreateGmf.LOGGER.warn("Entity Culling API failed; leaving visuals visible.", error);
         }
-        available = false;
-        cullableType = null;
-        isCulled = null;
-        isForcedVisible = null;
     }
 }

@@ -1,0 +1,88 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148'
+}
+
+version = '0.1.3.3'
+apply from: '../production-selectors.gradle'
+group = 'dev.creategmf'
+base.archivesName = 'create_gmf-0.1.3.3-mc1.20.1-forge-neoforge'
+tasks.withType(Jar).configureEach { archiveVersion = '' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xmaxerrs', '300'])
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://api.modrinth.com/maven'; content { includeGroup 'maven.modrinth' } }
+    maven { url = 'https://maven.createmod.net'; content { includeGroupByRegex 'dev\\.engine-room.*'; includeGroupByRegex 'net\\.createmod.*' } }
+    maven { url = 'https://maven.ithundxr.dev/mirror'; content { includeGroupByRegex 'com\\.tterrag.*' } }
+}
+
+sourceSets.main.java.srcDir('.generated/java')
+sourceSets.main.resources.srcDir('.generated/resources')
+sourceSets.test.java {
+    srcDir('../tests/java')
+    srcDir('../../src/test/java')
+    // This suite checks the unchanged 1.21.1 ABI/source files, not this adapter.
+    exclude '**/RecoveryContractTest.java'
+}
+
+tasks.register('generatePortSources', Exec) {
+    commandLine 'powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '../generate-modern-forge.ps1'
+    inputs.dir('../../src/main')
+    inputs.dir('src/main')
+    inputs.file('../generate-modern-forge.ps1')
+    outputs.dir('.generated')
+}
+tasks.named('compileJava').configure { dependsOn 'generatePortSources' }
+tasks.named('processResources').configure { dependsOn 'generatePortSources' }
+
+legacyForge {
+    enable { forgeVersion = '1.20.1-47.1.33'; disableRecompilation = true }
+    validateAccessTransformers = false
+    mods { create_gmf { sourceSet sourceSets.main } }
+    runs {
+        client { client(); gameDirectory = file('run/client') }
+        server { server(); gameDirectory = file('run/server') }
+    }
+}
+
+dependencies {
+    modImplementation 'maven.modrinth:create:8amzvn9x'
+    modImplementation 'dev.engine-room.flywheel:flywheel-forge-1.20.1:1.0.5'
+    modImplementation 'net.createmod.ponder:Ponder-Forge-1.20.1:1.0.91'
+    modImplementation 'com.tterrag.registrate:Registrate:MC1.20-1.3.3'
+    jarJar(implementation('io.github.llamalad7:mixinextras-forge')) {
+        version { strictly '[0.4.1,0.5)'; prefer '0.4.1' }
+    }
+    compileOnly 'io.github.llamalad7:mixinextras-common:0.4.1'
+    modCompileOnly 'maven.modrinth:embeddium:UTbfe5d1'
+    modCompileOnly 'maven.modrinth:oculus:iQ1SwGc3'
+    modRuntimeOnly 'maven.modrinth:entityculling:HUUJcFnt'
+    annotationProcessor 'io.github.llamalad7:mixinextras-common:0.4.1'
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.ow2.asm:asm-tree:9.7.1'
+    testImplementation 'com.google.code.gson:gson:2.10.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly files(sourceSets.main.compileClasspath)
+}
+
+tasks.named('test', Test).configure { useJUnitPlatform() }
+
+mixin {
+    add sourceSets.main, 'create_gmf.refmap.json'
+    config 'create_gmf.mixins.json'
+}
+jar {
+    manifest.attributes('MixinConfigs': 'create_gmf.mixins.json',
+            'Implementation-Version': project.version, 'Built-On-Minecraft': '1.20.1')
+    from('../../LICENSE') { into 'META-INF' }
+    from('../../THIRD_PARTY_NOTICES.md') { into 'META-INF' }
+    from('../../THIRD_PARTY_LICENSES') { into 'META-INF/third_party' }
+}

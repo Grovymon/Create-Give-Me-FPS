@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "create_gmf",
+  "version": "0.1.3.3",
+  "name": "Create: Give Me FPS",
+  "description": "Client-side visual optimisation for Create without changing machine operation.",
+  "authors": ["Grovymon"],
+  "contact": {"sources": "https://github.com/Grovymon/Create-Give-Me-FPS"},
+  "license": "MIT",
+  "icon": "icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": ["dev.creategmf.CreateGmf"],
+    "client": ["dev.creategmf.client.CreateGmfClient"],
+    "modmenu": ["dev.creategmf.integration.ModMenuIntegration"]
+  },
+  "mixins": ["create_gmf.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.17.3",
+    "minecraft": "1.20.1",
+    "java": ">=17",
+    "fabric-api": "*",
+    "create": ">=6.0.8.1 <6.1",
+    "forgeconfigapiport": ">=8.0.2",
+    "entityculling": ">=1"
+  },
+  "suggests": {"modmenu": "*"}
+}

@@ -5,7 +5,8 @@ import java.util.EnumMap;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class GmfConfig {
-    public static final int CURRENT_VERSION = 12;
+    // Accept settings written by 0.1.3.2 without silently downgrading its schema.
+    public static final int CURRENT_VERSION = 13;
     public static final ClientValues CLIENT;
     public static final ModConfigSpec SPEC;
 

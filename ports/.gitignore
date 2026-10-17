@@ -1,0 +1,16 @@
+**/.gradle/
+**/build/
+**/run/
+**/.generated/
+**/.forge-shared/
+**/*-attempt-*.txt
+**/compile-*.txt
+**/compile-output.txt
+.tools/
+.downloads/
+.maven/
+.legacy-deps/
+
+# Loader metadata is source, despite the parent repository's META-INF rule.
+!*/src/main/resources/META-INF/
+!*/src/main/resources/META-INF/mods.toml
