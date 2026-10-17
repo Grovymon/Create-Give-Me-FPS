@@ -1,0 +1,206 @@
+[
+  {
+    "target": "neoforge-1.21.1",
+    "minecraft": "1.21.1",
+    "loaders": [
+      "neoforge"
+    ],
+    "createVersion": "6.0.10+mc1.21.1",
+    "modrinthVersionId": "UjX6dr61",
+    "url": "https://cdn.modrinth.com/data/LNytGWDc/versions/UjX6dr61/create-1.21.1-6.0.10.jar",
+    "filename": "create-1.21.1-6.0.10.jar",
+    "bytes": 19123767,
+    "sha512": "11cc8fc049d2f67f6548c7abfada6b82a3adb5c7ca410a742de04bbca76e03862c518721b88d806f6e6d768a4d68531fdb903a85859b25d1484d550cc7bafd4b",
+    "classes": 2692,
+    "embeddedJars": [
+      "META-INF/jarjar/flywheel-neoforge-1.21.1-1.0.6.jar",
+      "META-INF/jarjar/ponder-neoforge-1.0.82+mc1.21.1.jar",
+      "META-INF/jarjar/Registrate-MC1.21-1.3.0+67.jar"
+    ],
+    "kineticVisual": true,
+    "kineticInstance": false,
+    "beltRenderer": true,
+    "validation": "UPSTREAM_BINARY_ONLY_NOT_A_GMF_BUILD"
+  },
+  {
+    "target": "forge-1.20.1",
+    "minecraft": "1.20.1",
+    "loaders": [
+      "forge",
+      "neoforge"
+    ],
+    "createVersion": "mc1.20.1-6.0.8",
+    "modrinthVersionId": "8amzvn9x",
+    "url": "https://cdn.modrinth.com/data/LNytGWDc/versions/8amzvn9x/create-1.20.1-6.0.8.jar",
+    "filename": "create-1.20.1-6.0.8.jar",
+    "bytes": 19170905,
+    "sha512": "5b51f5d31437d9bfbf221b67459abd87260d284874e1e23b7ed1d522b23a48059a3b1d2c1c541428da35dc6be15561b4f3c7f36aac6df3a0e8db6a278f6b0316",
+    "classes": 2687,
+    "embeddedJars": [
+      "META-INF/jarjar/Ponder-Forge-1.20.1-1.0.91.jar",
+      "META-INF/jarjar/Registrate-MC1.20-1.3.3.jar",
+      "META-INF/jarjar/flywheel-forge-1.20.1-1.0.5.jar",
+      "META-INF/jarjar/mixinextras-forge-0.4.1.jar"
+    ],
+    "kineticVisual": true,
+    "kineticInstance": false,
+    "beltRenderer": true,
+    "validation": "UPSTREAM_BINARY_ONLY_NOT_A_GMF_BUILD"
+  },
+  {
+    "target": "forge-1.19.2",
+    "minecraft": "1.19.2",
+    "loaders": [
+      "forge"
+    ],
+    "createVersion": "1.19.2-0.5.1.i",
+    "modrinthVersionId": "tJVykywJ",
+    "url": "https://cdn.modrinth.com/data/LNytGWDc/versions/tJVykywJ/create-1.19.2-0.5.1.i.jar",
+    "filename": "create-1.19.2-0.5.1.i.jar",
+    "bytes": 15531765,
+    "sha512": "12df2737a9f118966a880b7d3929607deaf00a6ae23d97bf5ed060b76bd2b438a5a8f04ced42a49312e5d6a1790149116e113e5120069d13a544801e30dc2da4",
+    "classes": 2481,
+    "embeddedJars": [
+      "META-INF/jarjar/flywheel-forge-1.19.2-0.6.11-22.jar",
+      "META-INF/jarjar/Registrate-MC1.19-1.1.5.jar"
+    ],
+    "kineticVisual": false,
+    "kineticInstance": true,
+    "beltRenderer": true,
+    "validation": "UPSTREAM_BINARY_ONLY_NOT_A_GMF_BUILD"
+  },
+  {
+    "target": "forge-1.18.2",
+    "minecraft": "1.18.2",
+    "loaders": [
+      "forge"
+    ],
+    "createVersion": "1.18.2-0.5.1.i",
+    "modrinthVersionId": "7BIftSin",
+    "url": "https://cdn.modrinth.com/data/LNytGWDc/versions/7BIftSin/create-1.18.2-0.5.1.i.jar",
+    "filename": "create-1.18.2-0.5.1.i.jar",
+    "bytes": 15517713,
+    "sha512": "5b0c5686b043238a10e8bc32e27875da3b478b6c93d33e7086ead7982d1781ec8cdbd99459afdec5f99d1a6336596844f30dc6016fcb56717f1469bfb65de714",
+    "classes": 2471,
+    "embeddedJars": [
+      "META-INF/jarjar/flywheel-forge-1.18.2-0.6.11-107.jar",
+      "META-INF/jarjar/Registrate-MC1.18.2-1.1.3.jar"
+    ],
+    "kineticVisual": false,
+    "kineticInstance": true,
+    "beltRenderer": true,
+    "validation": "UPSTREAM_BINARY_ONLY_NOT_A_GMF_BUILD"
+  },
+  {
+    "target": "fabric-1.20.1",
+    "minecraft": "1.20.1",
+    "loaders": [
+      "fabric",
+      "quilt"
+    ],
+    "createVersion": "6.0.8.1+build.1744-mc1.20.1",
+    "modrinthVersionId": "HAqwA6X1",
+    "url": "https://cdn.modrinth.com/data/Xbc0uyRg/versions/HAqwA6X1/create-fabric-6.0.8.1%2Bbuild.1744-mc1.20.1.jar",
+    "filename": "create-fabric-6.0.8.1+build.1744-mc1.20.1.jar",
+    "bytes": 32189889,
+    "sha512": "6edaddb93bc87bf8204376d3ceddd3e3dfec1d716556a5925802f2ade59ce5a660ded50088fa94188842ff83fc29445363dfa5d423e425b1574092833b6fa896",
+    "classes": 2868,
+    "embeddedJars": [
+      "META-INF/jars/Ponder-Fabric-1.20.1-1.0.91.jar",
+      "META-INF/jars/Registrate-1.3.79-MC1.20.1.jar",
+      "META-INF/jars/accessors-2.3.13+1.20.1.jar",
+      "META-INF/jars/base-2.3.13+1.20.1.jar",
+      "META-INF/jars/brewing-2.3.13+1.20.1.jar",
+      "META-INF/jars/client_events-2.3.13+1.20.1.jar",
+      "META-INF/jars/core-3.6.3.jar",
+      "META-INF/jars/entity-2.3.13+1.20.1.jar",
+      "META-INF/jars/extensions-2.3.13+1.20.1.jar",
+      "META-INF/jars/flywheel-fabric-1.20.1-1.0.5-264.jar",
+      "META-INF/jars/forgeconfigapiport-fabric-8.0.0.jar",
+      "META-INF/jars/jsr305-3.0.2.jar",
+      "META-INF/jars/milk-lib-1.2.60.jar",
+      "META-INF/jars/model_generators-2.3.13+1.20.1.jar",
+      "META-INF/jars/models-2.3.13+1.20.1.jar",
+      "META-INF/jars/networking-2.3.13+1.20.1.jar",
+      "META-INF/jars/obj_loader-2.3.13+1.20.1.jar",
+      "META-INF/jars/reach-entity-attributes-2.4.0.jar",
+      "META-INF/jars/tags-2.3.13+1.20.1.jar",
+      "META-INF/jars/toml-3.6.3.jar",
+      "META-INF/jars/tool_actions-2.3.13+1.20.1.jar",
+      "META-INF/jars/transfer-2.3.13+1.20.1.jar"
+    ],
+    "kineticVisual": true,
+    "kineticInstance": false,
+    "beltRenderer": true,
+    "validation": "UPSTREAM_BINARY_ONLY_NOT_A_GMF_BUILD"
+  },
+  {
+    "target": "fabric-1.19.2",
+    "minecraft": "1.19.2",
+    "loaders": [
+      "fabric",
+      "quilt"
+    ],
+    "createVersion": "0.5.1-i-build.1630+mc1.19.2",
+    "modrinthVersionId": "XMiAOQvM",
+    "url": "https://cdn.modrinth.com/data/Xbc0uyRg/versions/XMiAOQvM/create-fabric-0.5.1-i-build.1630%2Bmc1.19.2.jar",
+    "filename": "create-fabric-0.5.1-i-build.1630+mc1.19.2.jar",
+    "bytes": 22186096,
+    "sha512": "a56d9a9f0028baaab81f4139f9c56cf82c7951deee94e3945ec7aec397ecf7fb679826ae6749d5d59dc2080cf301cd6ee07cfd8012af73f6da45f28186f032c0",
+    "classes": 2640,
+    "embeddedJars": [
+      "META-INF/jars/Registrate-1.1.58-MC1.19.2.jar",
+      "META-INF/jars/accessors-2.1.1453+1.19.2.jar",
+      "META-INF/jars/base-2.1.1453+1.19.2.jar",
+      "META-INF/jars/core-3.6.3.jar",
+      "META-INF/jars/entity-2.1.1453+1.19.2.jar",
+      "META-INF/jars/extensions-2.1.1453+1.19.2.jar",
+      "META-INF/jars/fake_players-2.1.1453+1.19.2.jar",
+      "META-INF/jars/flywheel-fabric-1.19.2-0.6.11-9.jar",
+      "META-INF/jars/forgeconfigapiport-fabric-4.2.11.jar",
+      "META-INF/jars/jsr305-3.0.2.jar",
+      "META-INF/jars/milk-lib-1.0.51.jar",
+      "META-INF/jars/networking-2.1.1453+1.19.2.jar",
+      "META-INF/jars/obj_loader-2.1.1453+1.19.2.jar",
+      "META-INF/jars/reach-entity-attributes-2.3.0.jar",
+      "META-INF/jars/tags-2.1.1453+1.19.2.jar",
+      "META-INF/jars/toml-3.6.3.jar",
+      "META-INF/jars/transfer-2.1.1453+1.19.2.jar"
+    ],
+    "kineticVisual": false,
+    "kineticInstance": true,
+    "beltRenderer": true,
+    "validation": "UPSTREAM_BINARY_ONLY_NOT_A_GMF_BUILD"
+  },
+  {
+    "target": "fabric-1.18.2",
+    "minecraft": "1.18.2",
+    "loaders": [
+      "fabric",
+      "quilt"
+    ],
+    "createVersion": "0.5.1-i-build.1629+mc1.18.2",
+    "modrinthVersionId": "L283tIV7",
+    "url": "https://cdn.modrinth.com/data/Xbc0uyRg/versions/L283tIV7/create-fabric-0.5.1-i-build.1629%2Bmc1.18.2.jar",
+    "filename": "create-fabric-0.5.1-i-build.1629+mc1.18.2.jar",
+    "bytes": 19179595,
+    "sha512": "7cbb611edd3bbb4cbbacbb8fecd869507492c9f8be817725ce6dc27843407f813dc7ac8ef7783a1325b06fd0d4087049a77deb52a6e9c6e03e36a8cbebe0c0ea",
+    "classes": 2633,
+    "embeddedJars": [
+      "META-INF/jars/ForgeTags-2.1.jar",
+      "META-INF/jars/Porting-Lib-1.2.1451-beta+1.18.2.jar",
+      "META-INF/jars/Registrate-MC1.18.2-1.1.11.jar",
+      "META-INF/jars/core-3.6.5.jar",
+      "META-INF/jars/flywheel-fabric-1.18.2-0.6.11-40.jar",
+      "META-INF/jars/forgeconfigapiport-fabric-3.2.4.jar",
+      "META-INF/jars/jsr305-3.0.2.jar",
+      "META-INF/jars/milk-lib-0.3.2.jar",
+      "META-INF/jars/reach-entity-attributes-2.1.1.jar",
+      "META-INF/jars/toml-3.6.5.jar"
+    ],
+    "kineticVisual": false,
+    "kineticInstance": true,
+    "beltRenderer": true,
+    "validation": "UPSTREAM_BINARY_ONLY_NOT_A_GMF_BUILD"
+  }
+]

@@ -39,6 +39,7 @@
     "client.BlockEntityCullableTrackingMixin",
     "client.BlockEntityStorageOcclusionMixin",
     "client.EntityCullingCullTaskMixin",
+    "client.EntityCullingPrefetchMixin",
     "client.FlapDisplaySectionMixin",
     "client.SpriteContentsMixin",
     "client.SpriteContentsTickerMixin",

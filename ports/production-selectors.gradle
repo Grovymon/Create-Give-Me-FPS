@@ -1,0 +1,93 @@
+import net.fabricmc.mappingio.MappingReader
+import net.fabricmc.mappingio.tree.MemoryMappingTree
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.AnnotationNode
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+import java.util.zip.ZipEntry
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+buildscript {
+    repositories { mavenCentral(); maven { url = 'https://maven.fabricmc.net/' } }
+    dependencies {
+        classpath 'net.fabricmc:mapping-io:0.8.0'
+        classpath 'org.ow2.asm:asm-tree:9.8'
+    }
+}
+
+// With legacy Mixin AP, remap=false preserves Create/Flywheel member names
+// but also leaves Minecraft types inside selector *strings* in named format.
+// Remap only annotation selectors, using the same loader mappings as the build.
+// Java types and instructions are already handled by remapJar / reobfJar.
+def fabric = plugins.hasPlugin('net.fabricmc.fabric-loom-remap')
+def mappingFile = provider { fabric ? loom.mappingsFile : file('build/moddev/artifacts/namedToIntermediate.tsrg') }
+tasks.matching { it.name == (fabric ? 'remapJar' : 'reobfJar') }.configureEach {
+    inputs.file(mappingFile)
+    doLast {
+        def tree = new MemoryMappingTree()
+        MappingReader.read(mappingFile.get().toPath(), tree)
+        int named = tree.getNamespaceId(fabric ? 'named' : tree.srcNamespace)
+        int intermediary = tree.getNamespaceId(fabric ? 'intermediary' : tree.dstNamespaces.first())
+        if (named == -2 || intermediary == -2) throw new GradleException('Missing production mapping namespaces')
+        def mapText = { String text ->
+            def invoke = text =~ /^L([^;]+);([^(:]+)(\(.*)$/
+            if (invoke.matches()) {
+                String owner = invoke.group(1), name = invoke.group(2), desc = invoke.group(3)
+                def member = tree.getMethod(owner, name, desc, named)
+                if (owner.startsWith('net/minecraft/') && !owner.startsWith('net/minecraft/class_') && member == null)
+                    throw new GradleException("Unmapped Minecraft invocation selector: ${text}")
+                String mappedName = member?.getName(intermediary) ?: name
+                return 'L' + tree.mapClassName(owner, named, intermediary) + ';' + mappedName + tree.mapDesc(desc, named, intermediary)
+            }
+            int paren = text.indexOf('(')
+            if (paren > 0 && text.substring(paren).contains('Lnet/minecraft/'))
+                return text.substring(0, paren) + tree.mapDesc(text.substring(paren), named, intermediary)
+            if (text.startsWith('net.minecraft.'))
+                return tree.mapClassName(text.replace('.', '/'), named, intermediary).replace('/', '.')
+            return text
+        }
+        Closure rewrite
+        rewrite = { Object object ->
+            if (object instanceof AnnotationNode) {
+                if (object.values != null) for (int i = 1; i < object.values.size(); i += 2) object.values[i] = rewrite(object.values[i])
+            } else if (object instanceof List) {
+                for (int i = 0; i < object.size(); i++) object[i] = rewrite(object[i])
+            } else if (object instanceof String) {
+                String mapped = mapText(object)
+                if (fabric && mapped =~ /Lnet\/minecraft\/(?!class_)/)
+                    throw new GradleException("Named Minecraft descriptor survived remapping: ${mapped}")
+                return mapped
+            }
+            return object
+        }
+        File artifact = archiveFile.get().asFile
+        File temporary = File.createTempFile('gmf-selectors-', '.jar', temporaryDir)
+        int changed = 0
+        new ZipFile(artifact).withCloseable { zip ->
+            new ZipOutputStream(new FileOutputStream(temporary)).withCloseable { output ->
+                zip.entries().each { entry ->
+                    byte[] bytes = zip.getInputStream(entry).withCloseable { it.readAllBytes() }
+                    if (entry.name.startsWith('dev/creategmf/') && entry.name.endsWith('Mixin.class')) {
+                        def node = new ClassNode()
+                        new ClassReader(bytes).accept(node, 0)
+                        rewrite(node.visibleAnnotations); rewrite(node.invisibleAnnotations)
+                        node.methods.each { method -> rewrite(method.visibleAnnotations); rewrite(method.invisibleAnnotations) }
+                        node.fields.each { field -> rewrite(field.visibleAnnotations); rewrite(field.invisibleAnnotations) }
+                        def writer = new ClassWriter(0)
+                        node.accept(writer)
+                        bytes = writer.toByteArray()
+                        changed++
+                    }
+                    def destination = new ZipEntry(entry.name)
+                    destination.time = entry.time
+                    output.putNextEntry(destination); output.write(bytes); output.closeEntry()
+                }
+            }
+        }
+        Files.move(temporary.toPath(), artifact.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        logger.lifecycle("Verified production namespace in ${changed} GMF mixin classes")
+    }
+}

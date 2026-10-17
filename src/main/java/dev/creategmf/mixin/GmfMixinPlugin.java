@@ -27,7 +27,8 @@ public final class GmfMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("dev.creategmf.mixin.fast_render.")) {
             return isLoaded("sodium") && isLoaded("iris");
         }
-        if (mixinClassName.endsWith("EntityCullingCullTaskMixin")) {
+        if (mixinClassName.endsWith("EntityCullingCullTaskMixin")
+                || mixinClassName.endsWith("EntityCullingPrefetchMixin")) {
             // Nowheel owns this exact hook when it is installed. Applying both
             // redirects would duplicate the Entity Culling integration.
             return isLoaded("entityculling") && !isLoaded("nowheel");

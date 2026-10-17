@@ -2,6 +2,11 @@
 
 [Русская версия](README_RU.md) | English
 
+> **0.1.3.3 recovery build:** rendering behaviour is based on 0.1.3, not the
+> rewritten animation pipeline from 0.1.3.2. Explicit animation disables,
+> scrolling fallback and fluid-effect suppression are restored. See
+> [recovery notes](docs/releases/0.1.3.3.md) for scope and testing limits.
+
 <p align="center">
   <img src="docs/icon.png" alt="Create: Give Me FPS icon" width="360">
 </p>
@@ -13,6 +18,13 @@ Flywheel renderer—without changing the factory itself.
 
 Target platform: **Minecraft Java 1.21.1 · NeoForge · Create 6.0.10 · Flywheel
 1.0.6 · Java 21**.
+
+Experimental **0.1.3.3** ports are also available for 1.20.1 Forge/NeoForge
+and Fabric/Quilt, plus 1.19.2 and 1.18.2 Forge and Fabric/Quilt. These are not
+feature-complete or factory-validated replacements: legacy accelerated rendering
+and full moving-contraption animation parity are not available. Quilt and
+NeoForge 1.20.1 were not separately runtime-tested. See the
+[port matrix and limitations](ports/README.md) before choosing a download.
 
 > The mod changes client visuals only. Recipes, inventories, kinetic stress,
 > machine behaviour, saved worlds, and server-side simulation remain intact.
@@ -150,7 +162,7 @@ pack still need mutually compatible versions.
 ## Installation
 
 1. Install NeoForge, Create, Flywheel, and Entity Culling for Minecraft 1.21.1.
-2. Download `Create-Give-Me-FPS-0.1.3-NeoForge-1.21.1.jar` from
+2. Download `create_gmf-0.1.3.3.jar` from
    [Releases](../../releases).
 3. Put the JAR into the instance's `mods` directory.
 4. Open Minecraft's Mods menu and select **Create: Give Me FPS** to configure

@@ -70,6 +70,15 @@ public final class CreateOcclusionController {
 
     /** Called only by Entity Culling's own state transition hook. */
     public static void onCullChanged(BlockEntity blockEntity, boolean nowCulled) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!minecraft.isSameThread()) {
+            minecraft.execute(() -> {
+                if (blockEntity.getLevel() == minecraft.level && !blockEntity.isRemoved()) {
+                    onCullChanged(blockEntity, nowCulled);
+                }
+            });
+            return;
+        }
         if (!isActive() || !isCreateBlockEntity(blockEntity)) return;
         Boolean previous = TRACKED_CULLED.get(blockEntity);
         boolean changed = track(blockEntity, nowCulled);
@@ -89,6 +98,11 @@ public final class CreateOcclusionController {
     }
 
     public static void forget(BlockEntity blockEntity) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!minecraft.isSameThread()) {
+            minecraft.execute(() -> forget(blockEntity));
+            return;
+        }
         Boolean previous = TRACKED_CULLED.remove(blockEntity);
         if (previous == null) return;
         if (previous) occluded = Math.max(0, occluded - 1);

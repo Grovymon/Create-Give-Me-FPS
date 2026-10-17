@@ -1,0 +1,19 @@
+{
+  "modVersion": "0.1.3.3",
+  "baseline": "0.1.3 recovery",
+  "targets": [
+    {"id":"neoforge-1.21.1","minecraft":"1.21.1","loaders":["neoforge"],"create":"6.0.10","createVersionId":"UjX6dr61","java":21,"status":"built","project":".."},
+    {"id":"forge-1.20.1","minecraft":"1.20.1","loaders":["forge","neoforge"],"create":"6.0.8","createVersionId":"8amzvn9x","java":17,"status":"experimental_built","devStartupLoaders":["forge-47.1.33"],"untestedLoaders":["neoforge"],"project":"forge-1.20.1"},
+    {"id":"forge-1.19.2","minecraft":"1.19.2","loaders":["forge"],"create":"0.5.1.i","createVersionId":"tJVykywJ","java":17,"status":"experimental_built","devStartupLoaders":["forge-43.5.2"],"project":"forge-1.19.2"},
+    {"id":"forge-1.18.2","minecraft":"1.18.2","loaders":["forge"],"create":"0.5.1.i","createVersionId":"7BIftSin","java":17,"status":"experimental_built","devStartupLoaders":["forge-40.3.12"],"project":"forge-1.18.2"},
+    {"id":"fabric-1.20.1","minecraft":"1.20.1","loaders":["fabric","quilt"],"create":"6.0.8.1+build.1744-mc1.20.1","createVersionId":"HAqwA6X1","java":17,"status":"experimental_built","devStartupLoaders":["fabric-0.17.3"],"untestedLoaders":["quilt"],"project":"fabric-1.20.1"},
+    {"id":"fabric-1.19.2","minecraft":"1.19.2","loaders":["fabric","quilt"],"create":"0.5.1-i-build.1630+mc1.19.2","createVersionId":"XMiAOQvM","java":17,"status":"experimental_built","devStartupLoaders":["fabric-0.17.3"],"untestedLoaders":["quilt"],"project":"fabric-1.19.2"},
+    {"id":"fabric-1.18.2","minecraft":"1.18.2","loaders":["fabric","quilt"],"create":"0.5.1-i-build.1629+mc1.18.2","createVersionId":"L283tIV7","java":17,"status":"experimental_built","devStartupLoaders":["fabric-0.17.3"],"untestedLoaders":["quilt"],"project":"fabric-1.18.2"}
+  ],
+  "sources": [
+    "https://api.modrinth.com/v2/project/create/version",
+    "https://api.modrinth.com/v2/project/create-fabric/version",
+    "https://github.com/Creators-of-Create/Create/blob/mc1.20.1/dev/gradle.properties",
+    "https://github.com/Fabricators-of-Create/Create/blob/mc1.20.1/fabric/dev/gradle/libs.versions.toml"
+  ]
+}
